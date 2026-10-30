@@ -163,7 +163,7 @@ def hangar(game, q):
         sid = str(q.get('gemi') or '') if str(q.get('gemi') or '') in p.d['gemiler'] else p.d['aktif_gemi']
         gemi = p.ship(sid)
         yuvalar = [y for _p, y in MG.SLOTS if mg.capacity(y, sid) > 0]
-        takili = p.hangar_map()
+        yerler = p.item_places()
         konfigler = {}
         for cid in sorted(gemi['konfigler']):
             cfg = p.config(cid, sid)
@@ -188,13 +188,15 @@ def hangar(game, q):
             return h + (['pet'] if mg.pet.owned and PETM.slot_for(l) else [])
         envanter = []
         for i, l in p.d['esyalar'].items():
-            if int(i) in takili or l.startswith(('drone_', 'ship_')):          # dronlar ve gemiler eşya kaydında da durur
+            yer = yerler.get(int(i))
+            # items on another ship are hidden; items in a config of this ship stay listed for the other config (as in game)
+            if (yer and yer[0] != sid) or l.startswith(('drone_', 'ship_')):          # dronlar ve gemiler eşya kaydında da durur
                 continue
             sat = mg.sale_value(l) if not l.startswith(MG.QF.PREFIX) else None
-            if hedefler(l) or sat:
+            if hedefler(l) or (sat and not yer):
                 envanter.append({'id': int(i), 'lootId': l, 'hedefler': hedefler(l), 'seviye': MG.YK.item_level(p, int(i)),
                                  'yuva': MG.slot_of(l) or PETM.slot_for(l) or ('tasarim' if l in MG.DESIGNS else 'diger'),
-                                 'satis': list(sat) if sat else None})
+                                 'satis': list(sat) if sat and not yer else None, 'konfigler': sorted(yer[1]) if yer else []})
         gemiler = [{'id': k, 'lootId': g['lootId'], 'tasarim': g.get('tasarim'), 'aktif': k == p.d['aktif_gemi'],
                     'favori': bool(g.get('favori')), 'kayitli': bool(g.get('kayitli_konfig'))} for k, g in p.d['gemiler'].items()]
         petd = mg.pet.d if mg.pet.owned else None

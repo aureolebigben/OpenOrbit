@@ -726,6 +726,17 @@ class Profil:
         takılılar, dron tasarımları ve P.E.T. donanımı; hepsi takıldığı gemiye (hangara) bağlı."""
         return {i: s['hangarId'] for sid, s in self.d['gemiler'].items() for i in self.ship_items(sid)}
 
+    def item_places(self):
+        """itemId -> (ship id, set of config ids) where it is equipped. The game lets one item sit in several configs of the same
+        ship (magaza.move only refuses another ship), so the panel shows these items for the other configs."""
+        out = {}
+        for sid, s in self.d['gemiler'].items():
+            cids = set(s['konfigler']) | set(s.get('dron_konfig', {})) | set(s.get('dron_tasarim', {})) | set(s.get('pet_konfig', {}))
+            for cid in cids:
+                for i in self.ship_items(sid, cid):
+                    out.setdefault(i, (sid, set()))[1].add(str(cid))
+        return out
+
     def ship_items(self, sid=None, cid=None):
         """Bir geminin (cid verilirse yalnız o config'inin) takılı eşya kimlikleri: gemi yuvaları, dronlar, dron tasarımları, P.E.T."""
         s = self.ship(sid)
