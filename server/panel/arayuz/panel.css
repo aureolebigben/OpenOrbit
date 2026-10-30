@@ -472,9 +472,6 @@ input[type=range]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 4px rg
 .meter.sh .meter-bar span { background-color: var(--accent); color: var(--accent); }
 .meter.cg .meter-bar span { background-color: var(--warn); color: var(--warn); }
 /* testler */
-.test-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 4px 16px; }
-.test-row { display: flex; align-items: center; gap: 9px; padding: 6px 9px; border-radius: var(--radius-sm); cursor: default; min-width: 0; }
-.test-row.click:hover { background: rgba(110, 160, 220, .06); cursor: pointer; }
 .ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex: 0 1 auto; max-width: 52%; }
 .actions { display: flex; gap: 6px; flex-wrap: wrap; }
 /* çoklu istemci kartı: ek istemcide açılabilecek kayıtlar */

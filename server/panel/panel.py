@@ -44,7 +44,6 @@ import istemci_yama as YAMA   # noqa: E402
 import surecler as SR         # noqa: E402
 from kayitlar import Kayitlar, KayitHatasi, FIRMALAR  # noqa: E402
 from yapilandirma import PanelConfig  # noqa: E402
-from testler import Testler  # noqa: E402
 from protokol import Uyarlayici  # noqa: E402
 from indirme import Indirici, IndirmeHatasi  # noqa: E402
 from guncelleme import Guncelleyici, GuncellemeHatasi  # noqa: E402
@@ -145,7 +144,6 @@ KAY = Kayitlar(CFG, python=SR.python_exe())
 ARK = Arkadas(CFG, KAY, YON, log, SURUM)                        # Arkadaşlarınla Oyna: Host ve Join (arkadas.py)
 COK = Coklu(CFG, KAY, YON, lambda: ARK.anahtar, YOL.LOGS, log)  # çoklu istemci: öteki kayıtlarla ek istemciler (coklu.py)
 KAY.in_use = lambda slot: (YON.running() and YON.slot == slot) or ARK.kullanimda(slot) or COK.kullanimda(slot)
-TEST = Testler(SERVER, SR.python_exe(), log, SR.NO_WINDOW)     # panelden testler (testler.py)
 UYAR = Uyarlayici(ROOT, SR.python_exe(), log, SR.NO_WINDOW)    # yeni istemciye protokol uyarlaması (protokol.py)
 UPD = Guncelleyici(ROOT, YOL.SAVE, log)                          # GitHub'dan güncelleme (guncelleme.py)
 MOT = CAL.motor()                                                # macOS: panelin kurduğu Wine + DXMT (wine_motoru.py)
@@ -803,10 +801,10 @@ YON.on_client_exit = on_client_exit
 
 
 def idle(strict=False):
-    """Güncelleme kurulabilir mi: oyun, sunucular, başlatma, istemci indirmesi, protokol aracı ve testler durmuş (strict: panelin
+    """Güncelleme kurulabilir mi: oyun, sunucular, başlatma, istemci indirmesi, protokol aracı durmuş (strict: panelin
     açmadığı DarkOrbit istemcisi de yok; tasklist çalışır)."""
     busy = (YON.running() or YON.client_alive() or STATE['oyna']['calisiyor'] or DL.running() or UYAR.state()['calisiyor']
-            or TEST.calisiyor or ARK.aktif() or COK.canli() or MOT.running() or YAM.running() or LLM.running())
+            or ARK.aktif() or COK.canli() or MOT.running() or YAM.running() or LLM.running())
     return not busy and not (strict and IST.running_clients())
 
 
@@ -1414,8 +1412,6 @@ def h_get(path, q):
                 'satirlar': SR.tail(p, n), 'liste': [{'ad': g, 'boyut': os.path.getsize(os.path.join(YOL.LOGS, g))
                                                        if os.path.isfile(os.path.join(YOL.LOGS, g)) else None}
                                                       for g in GUNLUKLER + ek_gunlukler()]}
-    if path == '/api/testler':
-        return TEST.state()
     if path == '/api/istemci/indirme':              # istemci indirmenin durumu (indirme.py)
         return DL.state()
     if path == '/api/motor':                        # macOS: panelin Wine'ı ve Rosetta (wine_motoru.py)
@@ -1759,13 +1755,6 @@ def h_post(path, b):
             return UYAR.activate(b.get('surum'))
         except RuntimeError as e:
             raise Hata(str(e))
-    if path == '/api/testler/calistir':
-        try:
-            return TEST.start(b.get('adlar') or None)
-        except RuntimeError as e:
-            raise Hata(str(e))
-    if path == '/api/testler/durdur':
-        return TEST.stop()
     if path == '/api/gunluk/temizle':
         name = b.get('ad')
         if name not in GUNLUKLER and not EK_GUNLUK.fullmatch(str(name or '')):

@@ -317,7 +317,7 @@ async function poll() {
   if (S.durum?.panel?.guncellendi && S.durum.panel.acik_sn < 60 && !S.updToast) { S.updToast = true; toast(T('Panel güncellendi ve yeniden başladı.'), 'ok'); }
   renderChrome();
   if (S.page === 'oyna') { renderOynaBody(); liveTick(); }
-  if (S.page === 'sunucu') { renderServerCards(); testTick(); }
+  if (S.page === 'sunucu') renderServerCards();
   if (S.page === 'arkadas' && ARK.veri) arkTick();
   poll.n = (poll.n || 0) + 1;
   if (poll.n % 3 === 0) muzayedeOlayTick();      // açık artırma bildirimleri (~5 sn)
@@ -1572,45 +1572,11 @@ async function renderSunucu() {
         btn(T('Klasör'), () => act(() => api('/api/klasor_ac', { ne: 'gunlukler' })), 'ghost sm', 'folder'),
         btn(T('Temizle'), async () => { if (await confirmBox(T('Günlük temizlensin mi?'), T('{0} boşaltılır.', logState.ad), { ok: T('Temizle'), danger: true })) act(() => api('/api/gunluk/temizle', { ad: logState.ad }), T('Temizlendi.')).then(loadLog); }, 'ghost sm', 'trash'))),
     h('div', { class: 'log-tabs', id: 'log-tabs', style: { margin: '10px 0' } }), h('div', { class: 'log-view', id: 'log-view' }));
-  const tests = h('div', { class: 'card', id: 'test-card', style: { display: 'none' } });
-  $('#content').replaceChildren(h('div', { class: 'stack' }, h('div', { class: 'grid g3', id: 'srv-cards' }), h('div', { class: 'grid g2' }, behav, ports), tests, logs));
-  S.sig = {}; S.tests = null;
+  $('#content').replaceChildren(h('div', { class: 'stack' }, h('div', { class: 'grid g3', id: 'srv-cards' }), h('div', { class: 'grid g2' }, behav, ports), logs));
+  S.sig = {};
   renderServerCards();
-  testTick(true);
   loadLog();
   S.timers.push(setInterval(() => { if (logState.oto && document.visibilityState === 'visible') loadLog(true); }, 2000));
-}
-
-// ---- testler (server/test/test_*.py; testler.py, /api/testler). Test dosyası yoksa kart görünmez.
-const TEST_ST = { gecti: [N('Geçti'), 'ok'], kaldi: [N('Kaldı'), 'err'], zaman_asimi: [N('Zaman aşımı'), 'err'], calisiyor: [N('Çalışıyor'), 'info'],
-  bekliyor: [N('Bekliyor'), ''], atlandi: [N('Atlandı'), 'warn'], yok: ['—', ''] };
-async function testTick(force) {
-  const card = $('#test-card'); if (!card) return;
-  if (!force && !(S.tests && S.tests.calisiyor)) return;
-  let r; try { r = await api('/api/testler'); } catch (e) { return; }
-  const sig = JSON.stringify(r);
-  if (!force && S.sig.tests === sig) return;
-  S.sig.tests = sig; S.tests = r;
-  card.style.display = r.sonuclar.length ? '' : 'none';
-  const o = r.ozet, run = r.calisiyor;
-  const stName = x => T((TEST_ST[x] || [x])[0]);
-  const showOut = x => modal({ title: x.ad, sub: stName(x.durum) + (x.sure_sn != null ? ' · ' + T('{0} sn', x.sure_sn) : ''), wide: true,
-    body: h('div', { class: 'log-view', style: { maxHeight: '60vh' } }, (x.cikti || [T('Çıktı yok.')]).map(l => h('div', { class: /Error|Traceback|assert/i.test(l) ? 'e' : '' }, l))) });
-  card.replaceChildren(
-    h('div', { class: 'row between wrap' }, h('h2', null, icon('check'), T('Testler')),
-      h('div', { class: 'row wrap' },
-        r.bitis && !run ? h('span', { class: 'small muted' }, T('{0} geçti · {1} kaldı · {2}', o.gecti, o.kaldi, fmtDur(r.bitis - r.baslangic))) : null,
-        run ? btn(T('Durdur'), () => act(() => api('/api/testler/durdur', {})).then(() => testTick(true)), 'danger sm', 'stop')
-          : btn(T('Hepsini çalıştır'), () => act(() => api('/api/testler/calistir', {})).then(() => testTick(true)), 'primary sm', 'play'),
-        !run && o.kaldi ? btn(T('Kalanları yeniden'), () => act(() => api('/api/testler/calistir', { adlar: r.sonuclar.filter(x => x.durum === 'kaldi' || x.durum === 'zaman_asimi').map(x => x.ad) })).then(() => testTick(true)), 'sm', 'refresh') : null)),
-    h('p', { class: 'desc' }, T('Sunucunun birim ve bütünleşik testleri; her dosya ayrı süreçte çalışır (oyun açıkken de çalışır, yalnız işlemciyi paylaşır). Bir satıra tıklayınca çıktısı açılır.')),
-    h('div', { class: 'test-list' }, r.sonuclar.map(x => {
-      const cls = (TEST_ST[x.durum] || [x.durum, ''])[1];
-      return h('div', { class: 'test-row' + (x.cikti ? ' click' : ''), onclick: x.cikti ? () => showOut(x) : null, title: x.ozet || null },
-        x.durum === 'calisiyor' ? h('span', { class: 'spin' }) : dot(cls), h('span', { class: 'mono' }, x.ad.replace(/^test_|[.]py$/g, '')),
-        h('span', { class: 'small muted ellipsis' }, x.ozet || ''), h('span', { class: 'spacer' }),
-        x.sure_sn != null ? h('span', { class: 'small dim' }, T('{0} sn', x.sure_sn)) : null, badge(stName(x.durum), cls));
-    })));
 }
 
 function renderServerCards() {
