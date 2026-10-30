@@ -290,6 +290,18 @@ def tail(path, lines=200, max_bytes=512 * 1024):
     return text[-lines:]
 
 
+def bot_imzasi(bot):
+    """Bot paketinin (yol, içerik özeti): paket değişince sunucu yeniden başlar (botların ilerlemesi durum.json'da, sayılmaz)."""
+    if not bot:
+        return None
+    import hashlib
+    try:
+        with open(bot, 'rb') as fh:
+            return os.path.normcase(bot), hashlib.sha1(fh.read()).hexdigest()
+    except OSError:
+        return None
+
+
 def dunya_imzasi(dunya):
     """Dünyanın (yol, içerik özeti): oyun açıldıktan sonra değişen dünya sunucuyu yeniden başlatır; oyun açıkken uygulanan
     değişiklikler (veri.CANLI: mağaza, açık artırma) sayılmaz. Standart: None."""
@@ -410,23 +422,23 @@ class Yonetici:
                         'bizim': is_our_server(info)})
         return out
 
-    def needs_restart(self, profil, arkadas=None, coklu=None, dunya=None):
+    def needs_restart(self, profil, arkadas=None, coklu=None, dunya=None, bot=None):
         """Açık sunucular bu kayıt ve kiple yeniden başlamalı mı (başka kayıt, Host ya da çoklu istemci kipi, başka dünya ya da
-        dünya açıldıktan sonra değişti)."""
+        dünya açıldıktan sonra değişti, başka bot paketi ya da paket değişti)."""
         return self.running() and ((self.profil and os.path.normcase(self.profil) != os.path.normcase(profil))
                                    or self.arkadas != bool(arkadas) or (not arkadas and self.coklu != bool(coklu))
-                                   or self.dunya != dunya_imzasi(dunya))
+                                   or self.dunya != dunya_imzasi(dunya) or getattr(self, 'bot', None) != bot_imzasi(bot))
 
-    def start_servers(self, profil, ayarlar, kontrol=False, slot=None, arkadas=None, coklu=None, dunya=None):
+    def start_servers(self, profil, ayarlar, kontrol=False, slot=None, arkadas=None, coklu=None, dunya=None, bot=None):
         """Web ve oyun sunucusu (açık değilse) -> başlatılanların adları. Port doluysa ya da sunucu açılmazsa RuntimeError.
         arkadas: arkadaş sunucusunun ayarları (DO_COK_OYUNCULU; verilmezse tek oyunculu); coklu: çoklu istemcinin ayarları
         (DO_COK_OYUNCULU, misafirsiz; arkadaş sunucusu zaten çok oturumlu); dunya: Dünya Editörü'nün dünya dosyası (DO_DUNYA;
-        verilmezse standart dünya)."""
+        verilmezse standart dünya); bot: dünyanın bot paketi (DO_BOT; Botlar sayfası)."""
         ortam_json = arkadas or coklu
         with self.lock:
             if self.misafir:
                 raise RuntimeError(_('Arkadaşının sunucusundasın: önce oradan ayrıl.'))
-            if self.needs_restart(profil, arkadas, coklu, dunya):
+            if self.needs_restart(profil, arkadas, coklu, dunya, bot):
                 self.stop_servers()                               # başka kayıt ya da kip: yeniden başlat
             started = []
             py = python_exe()
@@ -451,10 +463,13 @@ class Yonetici:
                     if ortam_json:
                         cmd.append('--cok-oyunculu')
                         ortam = dict(ortam or {}, DO_COK_OYUNCULU=ortam_json)
+                    if bot:
+                        ortam = dict(ortam or {}, DO_BOT=bot)
                 self.sunucular[ad] = Surec(ad, cmd, os.path.join(self.logs, '%s_konsol.log' % ad), durdur, ortam).start()
                 started.append(ad)
             self.profil, self.slot, self.arkadas, self.coklu = profil, slot, bool(arkadas), bool(coklu and not arkadas)
             self.dunya = dunya_imzasi(dunya)
+            self.bot = bot_imzasi(bot)
             deadline = time.time() + 20
             while time.time() < deadline:
                 if all(listening(PORTS[ad][0]) for ad in ('web', 'oyun')):

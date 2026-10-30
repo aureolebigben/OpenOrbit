@@ -17,7 +17,7 @@ Diplomasi: ittifak (1) ve saldırmazlık (2) karşı klanın onayıyla (ClanEdit
 savaşı bitirme isteği (0) onayla. Gemilerin klan ilişkisi (ShipCreateCommand.clanDiplomacy) bakana göre (iliski; ortak_harita).
 Vergi: üyenin uzaylı ödülünden (profil.gain) oranı kadar kredi kasaya.
 """
-import copy, json, os, random, secrets, threading, time
+import copy, json, os, random, secrets, sys, threading, time
 
 import ayar as AY
 
@@ -54,6 +54,7 @@ LOCK = threading.RLock()
 KLANLAR = {}                  # klan kimliği -> asıl kayıt
 SILINEN = {}                  # silinen klanın kimliği -> anahtarı (bağlanan üyenin eski kopyası geri gelmesin)
 DOSYA = None                  # çok oyunculuda asıl kayıtların dosyası (configure)
+BOT_AD_N = 0                  # bot ad kaydının (ad_kaydi.py) bu kayıtlara uygulanan son sırası
 
 
 def mod(_cls, **f):
@@ -97,26 +98,29 @@ def ad(p):
 # ------------------------------------------------------------ asıl kayıtlar
 def configure(path):
     """Çok oyunculu sunucu (game.main): asıl kayıtlar dosyadan; değiştikçe yazılır."""
-    global DOSYA
+    global DOSYA, BOT_AD_N
     DOSYA = path
     try:
         with open(path, encoding='utf8') as fh:
             d = json.load(fh)
     except (OSError, ValueError):
-        return
+        d = {}
     with LOCK:
         for k in (d.get('klanlar') or {}).values():
             if isinstance(k, dict) and 'uyeler' in k:
                 KLANLAR.setdefault(int(k['id']), k)
         SILINEN.update({int(i): a for i, a in (d.get('silinen') or {}).items()})
+        BOT_AD_N = max(BOT_AD_N, int(d.get('bot_ad_kaydi') or 0))
+    import ad_kaydi as AK
+    AK.klanlar_uygula(sys.modules[__name__])        # panelde değişen ya da silinen bot adları (oyun kapalıyken)
 
 
 def kaydet():
     if not DOSYA:
         return
     with LOCK:
-        text = json.dumps({'klanlar': {str(i): k for i, k in KLANLAR.items()}, 'silinen': {str(i): a for i, a in SILINEN.items()}},
-                          ensure_ascii=False)
+        text = json.dumps({'klanlar': {str(i): k for i, k in KLANLAR.items()}, 'silinen': {str(i): a for i, a in SILINEN.items()},
+                           'bot_ad_kaydi': BOT_AD_N}, ensure_ascii=False)
         tmp = DOSYA + '.tmp'
         try:
             with open(tmp, 'w', encoding='utf8') as fh:
@@ -174,7 +178,11 @@ def _kopya(k, p):
 
 
 def bagla(p, log=print):
-    """Oturum açılırken: profildeki kopya asıl kayıtla birleşir (bkz. modül notu)."""
+    """Oturum açılırken: profildeki kopya asıl kayıtla birleşir (bkz. modül notu). Önce panelde değişen ya da silinen bot adları
+    kopyaya ve asıl kayıtlara uygulanır (ad_kaydi): silinen paketin botları klandan çıkar, adı değişen yeni adla görünür."""
+    import ad_kaydi as AK
+    AK.profil_uygula(p)
+    AK.klanlar_uygula(sys.modules[__name__])
     me = ad(p)
     with LOCK:
         s = p.d.get('klan')

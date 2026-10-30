@@ -83,6 +83,13 @@ def magaza(game):
         return dict(cuzdan(s), kategoriler=sira + [c for c in kat if c not in sira], esyalar=kat)
 
 
+def bot_ad_kaydi(game, b):
+    """Panel bir botun adını değiştirdi (ad_kaydi.py): oyun açıkken hemen uygulanır (botlar, klanlar, bağlı oyuncuların rehberi)."""
+    from bot import yonetici as YN
+    y = YN.AKTIF
+    return {'tamam': True, 'degisen': y.ad_kaydi_uygula() if y is not None else 0}
+
+
 def isle(s, name, f):
     """İstemci göndermiş gibi (game.Session.inject gibi) -> o sırada istemciye gönderilen mesajlar."""
     giden = []
@@ -473,7 +480,7 @@ def start(game, folder, log=print):
                       '/hangar/islem': hangar_islem,
                       '/skylab/islem': skylab_islem, '/skylab/robot': robot, '/muzayede/teklif': teklif, '/muzayede/hepsi': hepsi,
                       '/muzayede/anlik': anlik, '/muzayede/oto': lambda g, b: kural(g, b, 'otomatik'),
-                      '/muzayede/alarm': lambda g, b: kural(g, b, 'alarmlar')}
+                      '/muzayede/alarm': lambda g, b: kural(g, b, 'alarmlar'), '/bot/ad_kaydi': bot_ad_kaydi}
             if self.path in yollar and isinstance(b, dict):
                 return self._isle(lambda: yollar[self.path](game, b))
             self._yanit(404, {'hata': 'yok'})

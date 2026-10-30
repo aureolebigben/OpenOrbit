@@ -1,0 +1,83 @@
+/* OpenOrbit paneli — Botlar (botlar.js). Sınıflar bt- önekli; renkler panel.css değişkenlerinden. */
+body[data-page=botlar] .topbar { --hdr: url(gorsel/hdr_botlar.webp); }
+
+/* ---------------------------------------------------------------- kitaplık */
+.bt-giris { display: flex; align-items: center; gap: 18px; }
+.bt-giris > div { flex: 1; min-width: 0; }
+.bt-giris-art { width: 120px; height: 120px; object-fit: contain; margin: -10px -6px -14px 0; filter: drop-shadow(0 6px 18px rgba(64, 223, 255, .2)); }
+.bt-izgara { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.bt-kart { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: var(--radius); cursor: pointer; text-align: left; color: inherit;
+  font: inherit; padding: 0; background: linear-gradient(180deg, rgba(16, 27, 47, .9), rgba(9, 16, 30, .92));
+  transition: border-color .15s, transform .15s, box-shadow .15s; }
+.bt-kart:hover { border-color: var(--line-hi); transform: translateY(-2px); box-shadow: 0 12px 30px rgba(0, 0, 0, .35), 0 0 0 1px rgba(64, 223, 255, .1); }
+.bt-kart-ust { display: flex; align-items: center; gap: 12px; padding: 14px; border-bottom: 1px solid var(--line);
+  background: linear-gradient(90deg, rgba(64, 223, 255, .08), transparent 70%); border-radius: var(--radius) var(--radius) 0 0; }
+.bt-kart-ust.k-basit { background: linear-gradient(90deg, rgba(62, 229, 155, .08), transparent 70%); }
+.bt-kart-ust.k-gelismis { background: linear-gradient(90deg, rgba(255, 165, 74, .11), transparent 70%); }
+.bt-kart-ust b { font: 600 17px/1.2 var(--display); letter-spacing: .02em; }
+.bt-kart-art { width: 54px; height: 54px; object-fit: contain; flex: none; }
+.bt-kart-govde { display: flex; flex-direction: column; gap: 9px; padding: 12px 14px; flex: 1; }
+.bt-kart-govde .badge svg { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; }
+.bt-kart-alt { display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; border-top: 1px solid var(--line); }
+.bt-kart.yeni { align-items: center; justify-content: center; gap: 8px; min-height: 230px; border-style: dashed; border-color: var(--line-2);
+  background: rgba(8, 14, 27, .55); color: var(--accent); }
+.bt-kart.yeni svg { width: 30px; height: 30px; }
+.bt-kart.yeni span { font: 600 16px var(--display); letter-spacing: .03em; color: var(--text); }
+.bt-firmalar { display: flex; height: 6px; border-radius: 3px; overflow: hidden; background: rgba(4, 9, 18, .9); border: 1px solid var(--line-2); }
+.bt-firmalar i { display: block; height: 100%; }
+.bt-firmalar i.mmo { background: var(--mmo); }
+.bt-firmalar i.eic { background: var(--eic); }
+.bt-firmalar i.vru { background: var(--vru); }
+
+/* ---------------------------------------------------------------- sihirbaz */
+.bt-adimlar { display: flex; gap: 6px; flex-wrap: wrap; }
+.bt-adimlar span { display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px 5px 6px; border-radius: 99px; border: 1px solid var(--line-2);
+  color: var(--muted); font-size: 12.5px; }
+.bt-adimlar span b { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; background: rgba(4, 9, 18, .9); font-size: 11px; }
+.bt-adimlar span.on { color: #fff; border-color: var(--accent); box-shadow: 0 0 12px rgba(64, 223, 255, .18); }
+.bt-adimlar span.on b { background: var(--accent); color: #031019; }
+.bt-adimlar span.tamam { color: var(--ok); }
+.bt-kipler { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bt-kip { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 14px; border-radius: var(--radius); cursor: pointer; text-align: left;
+  border: 1px solid var(--line-2); background: rgba(8, 14, 27, .7); color: var(--muted); font: inherit; transition: border-color .15s, box-shadow .15s; }
+.bt-kip:hover { border-color: var(--line-hi); }
+.bt-kip.on { border-color: var(--accent); box-shadow: 0 0 0 1px rgba(64, 223, 255, .25), 0 0 22px rgba(64, 223, 255, .12); color: var(--text); }
+.bt-kip b { display: flex; align-items: center; gap: 7px; color: #fff; font: 600 16px var(--display); letter-spacing: .04em; }
+.bt-kip b svg { width: 17px; height: 17px; color: var(--accent); }
+.bt-kip-art { width: 100%; height: 92px; object-fit: contain; }
+.bt-dagilim { flex-wrap: nowrap !important; }
+.bt-dagilim .input.num { width: 58px; }
+.bt-range { width: 220px; accent-color: var(--accent); }
+.bt-deger { min-width: 48px; font-variant-numeric: tabular-nums; color: var(--text); }
+.bt-siniflar { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+.bt-sinif { display: flex; align-items: center; justify-content: space-between; gap: 6px; padding: 6px 8px; border: 1px solid var(--line-2);
+  border-radius: var(--radius-sm); background: rgba(4, 9, 18, .5); font-size: 12.5px; }
+.bt-sinif .input.num { width: 64px; }
+
+/* ---------------------------------------------------------------- editör */
+.bt-cubuk { display: flex; align-items: center; gap: 12px; padding: 10px 14px; }
+.bt-cubuk-art { width: 40px; height: 40px; object-fit: contain; }
+.bt-cubuk-ad { min-width: 0; }
+.bt-cubuk-ad b { font: 600 18px/1.2 var(--display); letter-spacing: .02em; }
+.bt-cubuk .badge svg { width: 11px; height: 11px; margin-right: 3px; vertical-align: -1px; }
+.bt-sekmeler button { display: inline-flex; align-items: center; gap: 6px; }
+.bt-sekmeler button svg { width: 14px; height: 14px; }
+.bt-tablo { overflow: auto; max-height: 560px; }
+.bt-tablo td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.bt-ad { color: var(--accent); text-decoration: none; font-weight: 600; }
+.bt-ad:hover { text-decoration: underline; }
+.bt-llm { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 18px; align-items: start; }
+.bt-llm-art { width: 120px; height: 120px; object-fit: contain; }
+.bt-llm-adim { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); }
+.bt-llm-adim:first-child { border-top: 0; }
+.bt-llm-adim > svg { width: 20px; height: 20px; flex: none; color: var(--accent); }
+.bt-llm-adim > div { flex: 1; min-width: 0; }
+.bt-llm-test { white-space: pre-wrap; font-family: var(--mono, monospace); font-size: 12px; padding: 10px; border-radius: var(--radius-sm);
+  background: rgba(4, 9, 18, .8); border: 1px solid var(--line-2); max-height: 180px; overflow: auto; }
+
+@media (max-width: 900px) {
+  .bt-kipler { grid-template-columns: 1fr; }
+  .bt-llm { grid-template-columns: 1fr; }
+}
+.bt-dil { min-width: 190px; }
+.bt-dil:disabled { opacity: .6; cursor: not-allowed; }

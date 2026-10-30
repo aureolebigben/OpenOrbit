@@ -23,7 +23,7 @@ Oyuncunun seçimi: yönetim panelinin Etkinlikler sayfası (ayar.py event_state:
 yıllık ve haftalık etkinliklerin hepsi; oyuna girişte bildirilir) önce gelir. Oyun sunucusu seçeneği: --etkinlik ad1,ad2 tarihten
 bağımsız açar (haftalıkları da); --etkinlik hepsi bütün yıllık etkinlikleri, --etkinlik yok hiçbir yıllık etkinliği açmaz (haftalıklar sürer).
 """
-import datetime, json, os, sys, time
+import datetime, functools, json, os, sys, time
 import veri as VERI
 
 import ayar as AY
@@ -126,13 +126,19 @@ def _day(s, y):
     return datetime.datetime(y, int(m), int(d))
 
 
+@functools.lru_cache(maxsize=4096)
+def _tarih(s, fmt):
+    """Sabit tarih metninin ayrıştırılması (strptime pahalı; etkinlik sorguları saniyede binlerce kez: botlar)."""
+    return datetime.datetime.strptime(s, fmt)
+
+
 def _spans(entries, t):
     """t'yi içerebilecek dönemler [(başlangıç, bitiş, saatler)] (datetime; bitiş hariç)."""
     out, dated, once = [], [], []
     for a, b, *h in entries:
         if a[:4].isdigit() and len(a) in (10, 16):          # 'YYYY-AA-GG' ya da 'YYYY-AA-GG SS:DD' (ilk gün saatle: Chromin 10:00)
-            s = datetime.datetime.strptime(a, '%Y-%m-%d %H:%M' if len(a) == 16 else '%Y-%m-%d')
-            e = datetime.datetime.strptime(b, '%Y-%m-%d %H:%M') if len(b) == 16 else datetime.datetime.strptime(b, '%Y-%m-%d') + DAY
+            s = _tarih(a, '%Y-%m-%d %H:%M' if len(a) == 16 else '%Y-%m-%d')
+            e = _tarih(b, '%Y-%m-%d %H:%M') if len(b) == 16 else _tarih(b, '%Y-%m-%d') + DAY
             (once if h[:1] == ['tek'] else dated).append((s, e, h[1:] if h[:1] == ['tek'] else h))
             continue
         for y in (t.year - 1, t.year):

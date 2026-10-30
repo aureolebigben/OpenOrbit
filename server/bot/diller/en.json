@@ -1,0 +1,536 @@
+{
+ "kod": "en",
+ "ad": "English",
+ "agirlik": 30,
+ "adlar": {
+  "parcalar": {
+   "on": [
+    "Dark",
+    "Shadow",
+    "Night",
+    "Iron",
+    "Steel",
+    "Blood",
+    "Ghost",
+    "Storm",
+    "Thunder",
+    "Silent",
+    "Crimson",
+    "Black",
+    "Red",
+    "Cyber",
+    "Star",
+    "Void",
+    "Nova",
+    "Frost",
+    "Fire",
+    "Death",
+    "Toxic",
+    "Mad",
+    "Lone",
+    "Wild",
+    "Rogue",
+    "Alpha",
+    "Omega",
+    "Hyper",
+    "Ultra",
+    "Neo",
+    "Lunar",
+    "Solar",
+    "Venom",
+    "Grim",
+    "Savage",
+    "Royal",
+    "Sky",
+    "Nuclear",
+    "Quantum"
+   ],
+   "arka": [
+    "Hunter",
+    "Slayer",
+    "Killer",
+    "Wolf",
+    "Hawk",
+    "Eagle",
+    "Dragon",
+    "Reaper",
+    "Rider",
+    "Knight",
+    "Lord",
+    "King",
+    "Blade",
+    "Fury",
+    "Viper",
+    "Cobra",
+    "Phantom",
+    "Raven",
+    "Tiger",
+    "Lion",
+    "Sniper",
+    "Pilot",
+    "Ace",
+    "Storm",
+    "Strike",
+    "Fang",
+    "Warrior",
+    "Ranger",
+    "Demon",
+    "Angel",
+    "Titan",
+    "Falcon",
+    "Wraith",
+    "Spectre",
+    "Hammer",
+    "Shark",
+    "Panther",
+    "X"
+   ],
+   "tek": [
+    "Maverick",
+    "Ghostrider",
+    "Nightmare",
+    "Predator",
+    "Terminator",
+    "Destroyer",
+    "Annihilator",
+    "Executioner",
+    "Gladiator",
+    "Spartan",
+    "Viking",
+    "Samurai",
+    "Ninja",
+    "Outlaw",
+    "Bandit",
+    "Nomad",
+    "Zephyr",
+    "Kraken",
+    "Leviathan",
+    "Phoenix",
+    "Hydra",
+    "Chaos",
+    "Havoc",
+    "Inferno",
+    "Eclipse",
+    "Vortex",
+    "Nebula",
+    "Pulsar",
+    "Quasar",
+    "Zenith",
+    "Apex",
+    "Rebel",
+    "Legend"
+   ],
+   "ulke": [
+    "PL",
+    "DE",
+    "ES",
+    "FR",
+    "RU",
+    "BR",
+    "GR",
+    "HU",
+    "RO"
+   ],
+   "ayrac": [
+    "",
+    "_",
+    "-"
+   ],
+   "sayi": [
+    "1",
+    "7",
+    "13",
+    "23",
+    "34",
+    "35",
+    "06",
+    "16",
+    "41",
+    "42",
+    "61",
+    "69",
+    "77",
+    "88",
+    "99",
+    "007",
+    "123",
+    "1903",
+    "1905",
+    "1907",
+    "1453",
+    "2000",
+    "2003",
+    "2005",
+    "2010",
+    "666",
+    "777",
+    "1923",
+    "01",
+    "07",
+    "27",
+    "33",
+    "38",
+    "55",
+    "21"
+   ]
+  },
+  "desenler": [
+   [
+    30,
+    "{on}{arka}"
+   ],
+   [
+    15,
+    "{on}{arka}{sayi}"
+   ],
+   [
+    10,
+    "xX{on|tek}Xx"
+   ],
+   [
+    10,
+    "{leet:tek|arka}"
+   ],
+   [
+    10,
+    "{on_k}_{arka_k}"
+   ],
+   [
+    10,
+    "{tek}{sayi}"
+   ],
+   [
+    7,
+    "The{tek|arka}"
+   ],
+   [
+    8,
+    "{tek}{ayrac}{ulke}"
+   ]
+  ]
+ },
+ "kaliplar": {
+  "savas_ilan": [
+   "we are at war with [{etiket}], shoot on sight",
+   "war declared on {klan}",
+   "[{etiket}] get ready"
+  ],
+  "ittifak": [
+   "allied with [{etiket}]",
+   "{klan} are our allies now, hold fire",
+   "[{etiket}] friends now"
+  ],
+  "baris": [
+   "peace with [{etiket}]",
+   "war is over, gg {klan}",
+   "we made peace"
+  ],
+  "tanik_patron": [
+   "gg {kim}",
+   "nice kill",
+   "boss down :D",
+   "gj {kim}",
+   "damn i wanted that one",
+   "nice one"
+  ],
+  "tanik_olum": [
+   "rip {ad}",
+   "oof",
+   "f",
+   "rip",
+   "get back here {ad}",
+   "that looked painful"
+  ],
+  "patron_oldurdum": [
+   "boss down",
+   "got the boss :)",
+   "nice loot from that boss"
+  ],
+  "posta_hosgeldin": [
+   "welcome to [{etiket}]! write me if you need anything",
+   "welcome to {klan}, say hi in clan chat",
+   "welcome aboard, see you in clan chat"
+  ],
+  "posta_grup_evet": [
+   "sure, invite me when you see me online",
+   "yeah sounds good, inv me when we are both on",
+   "ok, whisper me when you are on and we go"
+  ],
+  "posta_grup_hayir": [
+   "sorry, playing solo these days",
+   "cant right now, busy with my own quests",
+   "not much time this week, sorry"
+  ],
+  "posta_cevap": [
+   "got your message, whisper me in game",
+   "hey, saw your mail",
+   "ok, lets talk in game"
+  ],
+  "duello_kabul": [
+   "{harita}, im waiting",
+   "ok {harita}, come get some",
+   "sure, {harita} now"
+  ],
+  "duello_ayni": [
+   "we are same company lol",
+   "cant shoot my own company",
+   "same side man"
+  ],
+  "duello_ret": [
+   "not now",
+   "maybe later",
+   "nah, busy"
+  ],
+  "ozel_selam": [
+   "yo {ad}, wb",
+   "hey {ad}",
+   "sup {ad}, hows it going",
+   "oh hey {ad}"
+  ],
+  "ozel_grup": [
+   "wanna group up? im on {harita}",
+   "doing quests, wanna join?",
+   "group up {ad}?"
+  ],
+  "ozel_sohbet": [
+   "hows it going?",
+   "got any new gear?",
+   "still farming?"
+  ],
+  "grup_laf": [
+   "where to next?",
+   "nice kills",
+   "gotta repair quick",
+   "wanna try that boss?",
+   "going well"
+  ],
+  "pm_cevap": [
+   "yo, whats up?",
+   "here, what do you need?",
+   "hey, you wanted a pm?"
+  ],
+  "inv_me": [
+   "inv me",
+   "sure, inv me",
+   "send inv",
+   "yeah inv me",
+   "invite me"
+  ],
+  "davet_attim": [
+   "sent inv",
+   "inv sent",
+   "sure, check inv",
+   "yeah sent you an inv"
+  ],
+  "zaten_grupta": [
+   "already in a group",
+   "got a group atm",
+   "in another group rn"
+  ],
+  "klan_basvur": [
+   "apply to [{etiket}]",
+   "sure, apply to [{etiket}]",
+   "apply [{etiket}], ill accept"
+  ],
+  "klan_uye": [
+   "im in [{etiket}], ask {lider}",
+   "apply to [{etiket}], {lider} handles apps"
+  ],
+  "klan_yok": [
+   "no clan here",
+   "not in a clan atm",
+   "looking for one myself"
+  ],
+  "klana_basvurdum": [
+   "applied",
+   "ok sent an application",
+   "applied, accept me"
+  ],
+  "nerede": [
+   "on {harita}",
+   "{harita}",
+   "farming on {harita}"
+  ],
+  "geliyorum": [
+   "omw",
+   "coming",
+   "on my way to {harita}"
+  ],
+  "gelemem": [
+   "cant go there",
+   "cant enter that map",
+   "cant come rn"
+  ],
+  "arkadas_tamam": [
+   "added",
+   "sent you a request",
+   "sure, added"
+  ],
+  "selam": [
+   "hi all",
+   "hello",
+   "yo",
+   "hey guys",
+   "sup",
+   "hi",
+   "good evening all"
+  ],
+  "seviye": [
+   "lvl {seviye} finally",
+   "just hit level {seviye}",
+   "level {seviye} :D",
+   "ding {seviye}"
+  ],
+  "yeni_gemi": [
+   "finally got my {gemi}",
+   "new ship: {gemi}",
+   "bought {gemi} :D",
+   "{gemi} at last"
+  ],
+  "oldurdum": [
+   "gg",
+   "gg wp",
+   "ez",
+   "too easy",
+   "better luck next time",
+   "come again",
+   "gg :)"
+  ],
+  "oldum": [
+   "gg",
+   "lucky",
+   "rematch?",
+   "wait for it",
+   "lag...",
+   "nice one",
+   "wp"
+  ],
+  "oldum_kizgin": [
+   "i'll find you",
+   "won't forget this",
+   "always hitting weak ones huh",
+   "coming back with my clan"
+  ],
+  "grup_ara": [
+   "lf group {harita}",
+   "anyone farming {harita}?",
+   "group for quests?",
+   "lfg {harita}"
+  ],
+  "klan_alim": [
+   "[{etiket}] {klan} recruiting, lvl {seviye}+",
+   "{klan} looking for active players",
+   "[{etiket}] recruiting pm me"
+  ],
+  "ticaret": [
+   "nobody bid on {esya} pls :D",
+   "auction prices crazy again",
+   "best place to farm credits?"
+  ],
+  "genel": [
+   "when does the event end",
+   "lots of npcs on x-4",
+   "lag for anyone else?",
+   "uridium is so slow",
+   "any boss up?",
+   "dead chat",
+   "shields or lasers first?",
+   "when will i ever get goliath"
+  ],
+  "cikis": [
+   "bb",
+   "gtg",
+   "cya",
+   "night all",
+   "bye"
+  ],
+  "cevap_selam": [
+   "hi",
+   "hey",
+   "yo {ad}",
+   "hello",
+   "welcome back"
+  ],
+  "cevap_soru": [
+   "idk",
+   "not sure",
+   "i think so",
+   "don't think so",
+   "check the wiki",
+   "no idea",
+   "maybe"
+  ],
+  "cevap_evet": [
+   "ok coming",
+   "sure",
+   "on my way",
+   "ok wait",
+   "omw",
+   "ok"
+  ],
+  "cevap_hayir": [
+   "not now",
+   "busy",
+   "later",
+   "doing quests",
+   "no thanks",
+   "sorry"
+  ],
+  "cevap_hakaret": [
+   "you too",
+   "ok",
+   "k",
+   "talk less fight more",
+   ":)"
+  ],
+  "tesekkur": [
+   "thanks",
+   "ty",
+   "thx",
+   "thank you"
+  ],
+  "yardima_gidiyor": [
+   "omw to {harita}",
+   "coming {harita}",
+   "hold on",
+   "how many?"
+  ]
+ },
+ "kisaltma": [
+  [
+   "you",
+   "u"
+  ],
+  [
+   "please",
+   "pls"
+  ],
+  [
+   "thanks",
+   "thx"
+  ],
+  [
+   "are",
+   "r"
+  ],
+  [
+   "okay",
+   "ok"
+  ],
+  [
+   "because",
+   "cuz"
+  ],
+  [
+   "going to",
+   "gonna"
+  ],
+  [
+   "want to",
+   "wanna"
+  ]
+ ],
+ "ascii": {},
+ "ascii_oran": 0.0,
+ "niyet": {}
+}

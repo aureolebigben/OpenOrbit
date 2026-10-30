@@ -118,6 +118,12 @@ SCHEMA = [
     _b('x1_kargo', "X-1'de yüksek seviye kargo ve ödül azalması", 'odul', "X-1 haritalarında seviyen yükseldikçe uzaylıların kargo kutusu "
        'küçülür (seviye 7: %50, 10 ve üstü: hiç), kendi X-1 haritanda öldürme ödülü de azalır (seviye 15 ve üstü: hiç; oyundaki gibi). '
        'Kapatılırsa her seviyede tam kargo ve ödül.', varsayilan=True),
+    _b('etiket', 'Uzaylı etiketleme', 'odul', 'Uzaylıya ilk ateş eden onu etiketler: ödülü, görev sayımı ve kargo kutusu onun (ya da '
+       'grubunun) olur, başkası bitirse de. Etiket sahibi 15 saniye vurmazsa etiket düşer. Kapatılırsa ödül son vuranın.',
+       varsayilan=True),
+    _b('kargo_sahipligi', 'Kargo kutusu sahipliği', 'odul', "Uzaylının kargo kutusu yalnız sahibinindir; başkalarına mavi görünür "
+       "(oyunun Ayarlar > Ekran'daki başkalarının kargo kutuları seçeneği açıksa). Aynı firmadan birinin kutusunu toplamak onur "
+       'kaybettirir: o gün ilki 10, her seferinde iki katı. Kapatılırsa herkes toplar, ceza yok.', varsayilan=True),
     # ---------------------------------------------------------------- ilerleme
     _c('dron_puan', 'Dron deneyimi', 'ilerleme', 'Dronlarının uzaylı öldürünce kazandığı puan: dron seviye atlama hızı.',
        hi=50.0),

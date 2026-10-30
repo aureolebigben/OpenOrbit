@@ -116,6 +116,24 @@ def range_exceeded(uid, max_range, kind):
 
 # cephane bitince otomatik geçiş sırası (sıradan cephaneler; özel cephaneye kendiliğinden geçilmez)
 AUTO_AMMO = ['ammunition_laser_ucb-100', 'ammunition_laser_mcb-50', 'ammunition_laser_mcb-25', 'ammunition_laser_lcb-10']
+BLOCKED_BOX = 'FROM_SHIP_BLOCKED'   # istemci: başkasının kargo kutusu (Ayarlar > başkalarının kargo kutuları açıksa mavi görünür)
+ETIKET_SN = 15.0                    # etiket sahibi bu kadar vurmazsa etiket düşer
+
+
+def etiketle(n, kim, now):
+    """Uzaylıya ateş edildi: etiketi yoksa (ya da düştüyse) ateş eden etiketler; sahibinin her vuruşu etiketi tazeler.
+    kim: ('h', kahraman kimliği) ya da ('b', bot kimliği)."""
+    t = getattr(n, 'etiket', None)
+    if t is None or t[0] == kim or now - t[1] > ETIKET_SN:
+        n.etiket = (kim, now)
+
+
+def etiket_sahibi(n, now):
+    """Uzaylının geçerli etiketi (ödül, görev ve kargo kutusu onun) ya da None (etiketsiz, düşmüş ya da panelden kapalı)."""
+    t = getattr(n, 'etiket', None)
+    return t[0] if t is not None and now - t[1] <= ETIKET_SN and AY.get('etiket') else None
+
+
 CARGO_BOXES = ('FROM_SHIP', 'CANDY_CARGO', 'TURKEY_CARGO')     # uzaylının kargo kutusu (CANDY_CARGO: Halloween'in CandyCargo'sunda, kayıt; TURKEY_CARGO: Thanksgiving'de)
 AUTO_REFINE = (4, 5, 6)       # otomatik arıtmanın ürünleri (laboratuvar tarifleri, bu sırayla): Prometid, Duranium, Promerium
 
@@ -178,6 +196,9 @@ class Mover:
 
 
 class NPC:
+    bot = None                              # bot gemisi (bot/govde.BotGemi): oyuncu görünümlü, aklı govde.dusun
+    bot_hedef = None                        # bu uzaylının karşılık verdiği bot gemisinin kimliği (govde.npc_bota)
+
     def __init__(self, uid, tip, x, y, dalga=False):
         self.id, self.tip, self.d = uid, tip, CFG['tipler'][tip]
         k = AY.carpan('npc_can', 'dalga' if dalga else 'harita')     # dalga: kapı ve mod dalgasının uzaylısı
@@ -723,6 +744,8 @@ class World:
 
     # ------------------------------------------------------------ doğurma
     def ship_create(self, n):
+        if n.bot is not None:
+            return BG.gorunum(self, n)
         x, y = n.mover.pos(time.time())
         return ('ShipCreateCommand', dict(
             # expansionStage: görünen lazer sayısı; türe göre 1-3 (npc.json genisleme, resmî sunucu kaydı 2026-10-27)
@@ -756,7 +779,7 @@ class World:
         return (it['x'], it['y']) if it else None
 
     def item_in_view(self, h, hx, hy):
-        if h in self.boxes and not self.benim(self.boxes[h]):     # başkasının ganimeti (grup)
+        if h in self.boxes and (not self.benim(self.boxes[h]) or self.kargo_gizli(self.boxes[h])):     # başkasının ganimeti (grup)
             return False
         p = self.item_pos(h)
         lim = SAVAS['kutu_birakma' if h in self.seen_items else 'kutu_gorus']
@@ -780,8 +803,15 @@ class World:
     def item_msg(self, h):
         if h in self.ores:
             return self.ore_msg(h)
-        b = self.boxes[h]
-        return ('AddBoxCommand', dict(hash=h, boxType=b['tip'], x=b['x'], y=b['y']))
+        return self.box_cmd(h, self.boxes[h])
+
+    def box_cmd(self, h, b):
+        """Kutunun AddBoxCommand'ı bu kahramana: başkasının kargo kutusu FROM_SHIP_BLOCKED (istemci yalnız "başkalarının kargo
+        kutuları" ayarı açıksa, mavi gösterir)."""
+        tip = b['tip']
+        if tip in CARGO_BOXES and not self.benim_etiket(b.get('mal')) and AY.get('kargo_sahipligi'):
+            tip = BLOCKED_BOX
+        return ('AddBoxCommand', dict(hash=h, boxType=tip, x=b['x'], y=b['y']))
 
     def in_view(self, n, now, hx=None, hy=None):
         """NPC görüş mesafesinde mi (gösterilmişse bırakma uzaklığına dek görünür kalır). Seçili hedef uzaklaşsa da görünür kalır:
@@ -799,6 +829,8 @@ class World:
         """NPC'yi istemciye bildir: ShipCreateCommand, hareket ediyorsa kalan hareketi (MoveCommand)."""
         self.visible.add(n.id)
         msgs = [self.ship_create(n)]
+        if n.bot is not None:
+            msgs += BG.ek_gorunum(n)                 # botun unvanı ve dronları (oyuncunun gemisi gibi)
         msgs += list((getattr(n, 'gorseller', None) or {}).values())     # kalıcı görseller (Ö4: tahliye bölgesi, Guardian alanı)
         m = n.mover
         if m.t1 > now:
@@ -987,20 +1019,58 @@ class World:
             self.near_gate = None
         self.send([('JumpGateRemoveCommand', {'gateId': gid})])
 
-    def drop_box(self, kind, x, y, content, life, sahip=None):
-        """sahip: kutu yalnız bu kahramanın (grupta herkese düşen ganimet; öteki oyuncular görmez, toplayamaz)."""
+    def drop_box(self, kind, x, y, content, life, sahip=None, mal=None):
+        """sahip: kutu yalnız bu kahramanın (grupta herkese düşen ganimet; öteki oyuncular görmez, toplayamaz). mal: kargo kutusunun
+        sahibi ('h', kahraman) ya da ('b', bot): başkaları mavi görür, toplarsa aynı firmadansa onur kaybeder (kargo_cezasi)."""
         h = rand_hash()
         while h in self.boxes:
             h = rand_hash()
         self.boxes[h] = dict(tip=kind, x=int(x), y=int(y), icerik=content, bitis=time.time() + life if life else None)
         if sahip is not None:
             self.boxes[h]['sahip'] = sahip
-        self.send([('AddBoxCommand', dict(hash=h, boxType=kind, x=int(x), y=int(y)))])
+        if mal is not None:
+            self.boxes[h]['mal'] = mal
+        self.send([self.box_cmd(h, self.boxes[h])])
         return h
 
     def benim(self, b):
         """Kutuyu bu kahraman görür ve toplayabilir mi (sahipsiz ya da kendisinin)."""
         return b.get('sahip') in (None, self.hid)
+
+    def kargo_gizli(self, b):
+        """Başkasının kargo kutusu ve oyuncunun "başkalarının kargo kutuları" ayarı (displayPenaltyCargoboxes) kapalı: hiç
+        gönderilmez, görülenler kalkar (görüş döngüsü). İstemci ayarı yalnız değiştirildiği anda uyguluyor, sonradan gelen
+        FROM_SHIP_BLOCKED'ı yine çiziyordu (kullanıcı bildirimi 2026-10-30)."""
+        if b.get('tip') not in CARGO_BOXES or not AY.get('kargo_sahipligi') or self.benim_etiket(b.get('mal')):
+            return False
+        ayar = (self.p.d.get('ayarlar') or {}).get('displaySettingsModule') or {}
+        return not ayar.get('displayPenaltyCargoboxes', True)
+
+    def benim_etiket(self, kim):
+        """Etiket ya da kargo sahibi bu kahraman mı (ya da grubundan biri: oyuncu ya da bot); None: kimsenin değil."""
+        return kim is None or tuple(kim) == ('h', self.hid) or self.grup_uyesi(kim[1])
+
+    def kargo_cezasi(self, mal):
+        """Başkasının kargo kutusunu topladı: sahibi aynı firmadansa onur kaybı, o gün ilki 10, her seferinde iki katı
+        (darkorbitwiki Ranks: "Stealing cargo boxes from other players from the same company: -10, twice as much for each next
+        one") -> mesajlar."""
+        fac = None
+        if mal[0] == 'h' and self.ortak is not None:
+            o = next((w for w in self.ortak.uyeler if w.hid == mal[1]), None)
+            fac = o.p.d['pilot'].get('factionId') if o is not None else None
+        elif mal[0] == 'b':
+            fac = BG.bot_firma(mal[1])
+        if fac != self.p.d['pilot'].get('factionId'):
+            return []
+        d = self.p.d.setdefault('kargo_calma', {})
+        gun = time.strftime('%Y-%m-%d')
+        if d.get('gun') != gun:
+            d.update(gun=gun, n=0)
+        ceza = 10 * 2 ** min(d['n'], 16)
+        d['n'] += 1
+        tot = self.p.gain(onur=-ceza)
+        self.log('   başkasının kargo kutusu toplandı: -%d onur' % ceza)
+        return self.reward_msgs(tot, onur=-ceza)
 
     def drop_chests(self, sd, x, y, sahip=None):
         """Patron sandıkları: tek oyunculuda bütün hasar oyuncunun, en iyi kademeden en çok adet; uzaylının çevresine dizilir,
@@ -1080,7 +1150,7 @@ class World:
             if mines:
                 self.send([self.items.field_mine(x, y, time.time()) for x, y in mines])
             if restored:                  # saklanan kutular yeniden bildirilir (görüş süzgecinden geçer)
-                self.send([('AddBoxCommand', dict(hash=h, boxType=b['tip'], x=b['x'], y=b['y'])) for h, b in self.boxes.items()])
+                self.send([self.box_cmd(h, b) for h, b in self.boxes.items()])
             for g in self.extra_gates:
                 self.add_gate(g)
             self.start_rules()
@@ -1100,6 +1170,7 @@ class World:
         if self.durdu:
             return
         self.durdu = True
+        BG.ayril(self)                        # bot gemileri harita durumuyla saklanmasın
         with self.lock:
             self.parcacik.clear()
         if self.ortak is None:
@@ -1621,7 +1692,7 @@ class World:
             self.oyuncular.clear()                                                     # öteki oyuncular (ortak harita) sonraki adımda
             self.petler.clear()
             msgs = self.visible_msgs(time.time()) + \
-                   [('AddBoxCommand', dict(hash=h, boxType=b['tip'], x=b['x'], y=b['y'])) for h, b in self.boxes.items()] + \
+                   [self.box_cmd(h, b) for h, b in self.boxes.items()] + \
                    [self.ore_msg(h) for h in self.ores] + [H.jumpgate_create(g) for g in self.gates if 'designId' in g] + \
                    self.alien.capsule_msgs() + (self.low.asset_msgs() if self.low else []) + self.items.mine_msgs()
             self.near_assets, self.near_giver = None, None
@@ -1705,6 +1776,11 @@ class World:
             pet = self.own_pet(f.get('targetId'))          # kendi P.E.T.'i (pet_laser)
             asset = None if n or pet else self.asset_at(f.get('targetId'))
             player = self.oyuncu(f.get('targetId')) if not n and not asset and not pet else None
+            if n is not None and n.bot is not None:
+                denied = BG.saldiri_hatasi(self, n)
+                if denied:
+                    self.send(denied)
+                    return
             if player:
                 denied = PVP.attack_error(self, player, time.time())
                 if denied:
@@ -1863,6 +1939,9 @@ class World:
             b = self.boxes.get(h)
             if not b or not self.benim(b) or (by_pet and b.get('pet_yok')):      # Vortex of Greed kutularını P.E.T. toplayamaz (Ö4)
                 return False
+            yabanci = b['tip'] in CARGO_BOXES and not self.benim_etiket(b.get('mal')) and AY.get('kargo_sahipligi')
+            if yabanci and by_pet:
+                return False                                # P.E.T. başkasının kargosunu toplamaz
             boost = 1 + (self.pet.proto('kutu') if by_pet and self.pet else 0)
             m = self.p.mods()          # pilot yetenekleri: Tractor Beam I/II (kargo/bonus kutusu), Luck (bonus kutusu uridyumu)
             pre = []
@@ -1892,6 +1971,10 @@ class World:
                 del self.boxes[h]
             extra = b.pop('ek', None) if cargo_box else None           # kutudaki ek kaynaklar (extra_loot box) ilk alımda
             msgs = pre + [self.beam_msg(by_pet)] + ([] if left else [('RemoveCollectableCommand', {'collected': True, 'hash': h})])
+            if yabanci and not b.get('calindi'):             # başkasının kutusu: ceza bir kez (kısmi alımda kutu yerde kalır)
+                b['calindi'] = True
+                msgs += self.kargo_cezasi(b['mal'])
+                BG.kutusu_calindi(b['mal'], self.p.d['pilot'].get('userName', ''))
             if cargo_box:
                 totals = self.p.add_ores(ores)
                 content = [mod('OreCountModule', oreType=mod('OreTypeModule', typeValue=t), count=c) for t, c in sorted(ores.items())]
@@ -2127,6 +2210,8 @@ class World:
             n = self.npcs.get(uid)
             if not n or not n.alive or n.d.get('dost'):         # dost gemi (Deep Space Echoes: korunan/eşlik edilen) vurulmaz
                 return
+            if n.bot is not None and not BG.vuruldu(self, n, attacker):    # bot: PvP kuralları (DMZ, başlangıç haritası)
+                return
             now = time.time()
             immune = (n.invulnerable and n.invulnerable()) or n.etki.invulnerable(now) or self.guarded(n)
             only = n.d.get('sadece_cephane')            # resmî Türk forumu 135026: "CBO-100 & CBR HSTM Rockets hariç tüm cephanelere karşı dayanıklı"
@@ -2183,6 +2268,8 @@ class World:
                 if getattr(n, 'station_retaliation', None) is None:
                     n.station_retaliation = {}
                 n.station_retaliation[self.hid] = now    # keep each player's permission on a shared NPC
+            if engage:
+                etiketle(n, ('h', self.hid), now)                # ilk ateş eden etiketler (ıska da; P.E.T.'in vuruşu da sahibinin)
             if attacker and self.gizli(now):
                 engage = False                   # gizli oyuncunun P.E.T.'i (kamikaze, lazer) uzaylıyı oyuncuya kilitlemez (bildirim 2026-10-28)
             if engage and not n.engaged:
@@ -2325,9 +2412,13 @@ class World:
         return msgs
 
     def kill(self, n):
+        if n.bot is not None:
+            return BG.olduruldu(self, n)
         n.alive = False
         del self.npcs[n.id]
         x, y = n.mover.pos(time.time())
+        if BG.patron_mu(n):
+            BG.tanik(self, 'patron', x, y, ad=n.d.get('ad', ''), kim=self.p.d['pilot'].get('userName', ''))
         msgs = []
         pet_stop = self.pet.npc_gone(n.id) if self.pet else []     # P.E.T. ona ateş ediyorsa lazeri durur
         if n.d.get('sayilmaz'):                 # sahte Emperor Lordakium: ödülsüz, kutusuz, yeniden doğmaz; patlar
@@ -2348,9 +2439,7 @@ class World:
             msgs.append(('ShipRemoveCommand', {'userId': n.id}))
         msgs = pet_stop + msgs
         self.ofke.kill(self.lasers(), time.time())          # Asmodeus Fervor
-        pay = self.paydaslar()
-        for w in pay:
-            w.npc_reward(n, x, y, len(pay), own=w is self)
+        pay = self.etiket_paydaslari(n, x, y)
         for sp in n.davranis.get('olunce_dogur', []):       # ölünce doğanlar (Lordakium sporları …): yeniden doğmazlar
             for k in range(sp.get('adet', 1)):
                 a = 2 * math.pi * k / max(1, sp.get('adet', 1))
@@ -2363,6 +2452,31 @@ class World:
         self.drifter_killed(n)
         return msgs + self.alien.on_kill(n, x, y) + self.etkinlik.on_kill(n, x, y, w=self, pay=pay) + \
             (self.labirent.on_kill(n, x, y) if self.labirent else [])
+
+    def etiket_paydaslari(self, n, x, y):
+        """Uzaylının ödülünü etiketinin sahibine verir -> paydaş dünyalar. Etiket bu kahramanın ya da grubunun: her zamanki gibi
+        (paydaslar); başka bir oyuncunun (arkadaş sunucusu): onun ve grubunun; bir botun: botun (ödül, görev, kargo kutusu ondan
+        yana, govde.etiket_odulu). Başkasının etiketlisini bitiren ne ödül ne görev sayımı alır."""
+        kim = etiket_sahibi(n, time.time())
+        if kim is not None and kim[0] == 'b' and not (kim[1] in self.npcs and self.npcs[kim[1]].alive):
+            kim = None                                     # etiketleyen bot kaçtı ya da öldü: öldüren alır
+        if kim is not None and kim[0] == 'h' and kim[1] != self.hid and (self.ortak is None or not any(
+                w.hid == kim[1] and w.running and not w.hero_dead for w in self.ortak.uyeler)):
+            kim = None                                     # etiketleyen oyuncu haritada yok
+        sahip = self
+        if not self.benim_etiket(kim):
+            sahip = None
+            if kim[0] == 'h' and self.ortak is not None:
+                sahip = next((w for w in self.ortak.uyeler if w.hid == kim[1] and w.running and not w.hero_dead), None)
+            elif kim[0] == 'b':
+                BG.etiket_odulu(self, n, kim[1], x, y)
+            self.log('   %s başkasının etiketliydi: ödülü ve görevi onun' % n.d.get('ad'))
+            if sahip is None:
+                return []
+        pay = sahip.paydaslar()
+        for w in pay:
+            w.npc_reward(n, x, y, len(pay), own=w is sahip)
+        return pay
 
     def paydaslar(self):
         """Uzaylının ödülünü paylaşanlar: öldüren ve ortak haritada grubundan aynı haritada yaşayan üyeler (uzaklık önemsiz;
@@ -2404,6 +2518,7 @@ class World:
             o = dict(o, **{k: -(-o[k] // share) for k in ('ep', 'onur', 'kredi', 'uridyum')})
         in_rad = self.radiation_since is not None
         sahip = self.hid if share > 1 else None
+        mal = ('h', self.hid) if AY.get('kargo_sahipligi') else None     # kargo kutusunun sahibi (başkaları mavi görür)
         ek = {}                                            # kutuya giden ek kaynaklar (extra_loot box)
 
         def reward():
@@ -2439,7 +2554,7 @@ class World:
 
         def cargo_drop():                                  # ödülden (0,3 sn) sonra: ek kaynaklar da kutuda
             if cargo or ek:
-                h = self.drop_box(kind, x, y, cargo, SAVAS['kutu_omur_sn'], sahip)
+                h = self.drop_box(kind, x, y, cargo, SAVAS['kutu_omur_sn'], sahip, mal)
                 if ek:
                     self.boxes[h]['ek'] = ek
         self.later(SAVAS['kutu_gecikme_sn'], cargo_drop)
@@ -3550,6 +3665,12 @@ class World:
     def hero_death(self, msgs, killer=None, cause=None, note=None, source_player=None):
         """Oyuncu öldü: patlama + ölüm ekranı (KillScreenPostCommand). Oyuncu ekranda bir tamir seçince doğar (kill_screen_repair)."""
         self.hero_dead = True
+        try:
+            hx, hy = self.hero_pos()
+            BG.tanik(self, 'oyuncu_oldu', hx, hy, ad=self.p.d['pilot'].get('userName', ''),
+                     katil=getattr(getattr(killer, 'bot', None), 'ad', None) or getattr(killer, 'd', {}).get('ad', ''))
+        except Exception:
+            pass                                         # tanıklık sohbeti ölümü asla engellemesin
         self._effect_destination = None
         infected = bool(self.hero_etki.d.get('enfeksiyon') or getattr(self.p, '_infection_effect', None))
         self.hero_etki.remove('enfeksiyon')
@@ -3581,6 +3702,7 @@ class World:
             if self.bizim(n):
                 n.engaged = False
         msgs.append(('ShipDestroyedCommand', dict(destroyedUserId=self.hid, explosionTypeId=0)))
+        bot_katil = killer is not None and getattr(killer, 'bot', None) is not None     # bot oyuncu (bot/govde.py)
         killer_name = source_player.p.d['pilot'].get('userName', '') if source_player else killer.d['ad'] if killer else ''
         death_cause = 0 if source_player else (cause if cause is not None else DESTRUCTION_NPC if killer else DESTRUCTION_MISC)
         msgs.append(('KillScreenPostCommand', dict(
@@ -3589,9 +3711,11 @@ class World:
             options=self.repair_options())))
         self.log('   oyuncu yok edildi (%s): ölüm ekranı' % (killer_name or '?'))
         self.p.ach('death', npc=killer.d.get('npc_kimlik') if killer else None,
-                   neden='PLAYER' if source_player else {DESTRUCTION_RADIATION: 'RADIATION'}.get(cause, 'NPC' if killer else 'MISC'))
+                   neden='PLAYER' if source_player or bot_katil else {DESTRUCTION_RADIATION: 'RADIATION'}.get(cause, 'NPC' if killer else 'MISC'))
         key = note or ('killed_by_radiation' if cause == DESTRUCTION_RADIATION
-                       else 'killed_by_npc_%s' % killer.d.get('npc_kimlik', 0) if killer else None)
+                       else 'killed_by_npc_%s' % killer.d.get('npc_kimlik', 0) if killer and not bot_katil else None)
+        if bot_katil:
+            BG.oyuncu_oldu(self, killer)
         if key:
             RT.note(self.p, key)                        # seyir defteri
         if self.olum:
@@ -3885,6 +4009,14 @@ class World:
 
     def think(self, n, now):
         """NPC yapay zekâsı: dolaş; saldırıya uğrayan ya da saldırgan türse oyuncuyu kovala ve ateş et."""
+        if n.bot is not None:
+            try:
+                return BG.dusun(self, n, now)    # bot gemisi (bot/govde.py)
+            except Exception:
+                self.step_error('bot %s' % n.bot.ad)    # bir botun hatası öteki uzaylıları ve adımı durdurmasın
+                return None
+        if n.bot_hedef is not None and BG.npc_bota(self, n, now):
+            return                              # bota karşılık veriyor
         if n.d.get('dost'):
             return                              # dost gemiyi modu yönetir (echoes.py)
         if n.d.get('kacak'):                    # Plutus taretinin kaçak uzaylısı: oyuncudan uzaklaşır, ateş etmez (forum 143902)
@@ -4083,6 +4215,7 @@ class World:
         self.booster_tick(now)
         if lider:
             self.respawn_tick(now)
+            BG.tick(self, now)                 # botlar (bot/govde.py): haritadakiler gemi olarak
         self.auto_tick(now)
         self.effects_tick(now)
         self.abilities.tick(now)
@@ -4126,3 +4259,5 @@ class World:
             if b['bitis'] and now > b['bitis']:
                 del self.boxes[h]
                 self.send([('RemoveCollectableCommand', {'collected': False, 'hash': h})])
+
+import bot.govde as BG  # noqa: E402  (bot oyuncular; govde dunya'yı içe aktarır: sınıflardan sonra)

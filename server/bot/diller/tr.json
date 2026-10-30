@@ -1,0 +1,522 @@
+{
+ "kod": "tr",
+ "ad": "Türkçe",
+ "agirlik": 20,
+ "adlar": {
+  "parcalar": {
+   "isim": [
+    "Emre",
+    "Mert",
+    "Burak",
+    "Can",
+    "Efe",
+    "Arda",
+    "Baran",
+    "Deniz",
+    "Eren",
+    "Yigit",
+    "Onur",
+    "Serkan",
+    "Tolga",
+    "Umut",
+    "Volkan",
+    "Hakan",
+    "Cem",
+    "Ozan",
+    "Kerem",
+    "Alper",
+    "Batu",
+    "Sinan",
+    "Murat",
+    "Furkan",
+    "Selim",
+    "Berk",
+    "Ege",
+    "Mehmet",
+    "Ahmet",
+    "Mustafa",
+    "Ali",
+    "Ayse",
+    "Elif",
+    "Zeynep",
+    "Ece",
+    "Selin",
+    "Merve",
+    "Cagri",
+    "Taylan",
+    "Oguz",
+    "Koray"
+   ],
+   "soz": [
+    "Kurt",
+    "Bozkurt",
+    "Kartal",
+    "Sahin",
+    "Atmaca",
+    "Kaplan",
+    "Aslan",
+    "Pars",
+    "Yildiz",
+    "Kara",
+    "Demir",
+    "Celik",
+    "Firtina",
+    "Yildirim",
+    "Simsek",
+    "Ates",
+    "Ejder",
+    "Golge",
+    "Hayalet",
+    "Avci",
+    "Savasci",
+    "Akinci",
+    "Korsan",
+    "Komutan",
+    "Reis",
+    "Pasa",
+    "Sultan",
+    "Han",
+    "Bey",
+    "Tufan",
+    "Volkan",
+    "Kasirga",
+    "Gokturk",
+    "Alparslan",
+    "Kizil",
+    "Mavi",
+    "Gece",
+    "Uzay"
+   ],
+   "sifat": [
+    "Kara",
+    "Kizil",
+    "Deli",
+    "Yalniz",
+    "Asi",
+    "Sessiz",
+    "Olumsuz"
+   ],
+   "ek": [
+    "TR",
+    "Tr",
+    "_TR",
+    "Turk",
+    "_tr"
+   ],
+   "ayrac": [
+    "",
+    "_",
+    "."
+   ],
+   "sayi": [
+    "1",
+    "7",
+    "13",
+    "23",
+    "34",
+    "35",
+    "06",
+    "16",
+    "41",
+    "42",
+    "61",
+    "69",
+    "77",
+    "88",
+    "99",
+    "007",
+    "123",
+    "1903",
+    "1905",
+    "1907",
+    "1453",
+    "2000",
+    "2003",
+    "2005",
+    "2010",
+    "666",
+    "777",
+    "1923",
+    "01",
+    "07",
+    "27",
+    "33",
+    "38",
+    "55",
+    "21"
+   ]
+  },
+  "desenler": [
+   [
+    25,
+    "{isim}{sayi}"
+   ],
+   [
+    20,
+    "{soz}{ayrac}{sayi}"
+   ],
+   [
+    15,
+    "{soz}{soz}"
+   ],
+   [
+    12,
+    "{isim_k}{ayrac}{soz_k}"
+   ],
+   [
+    10,
+    "{sifat}{soz}"
+   ],
+   [
+    8,
+    "{soz}{ek}"
+   ],
+   [
+    10,
+    "{isim}{soz}{sayi?}"
+   ]
+  ]
+ },
+ "kaliplar": {
+  "savas_ilan": [
+   "[{etiket}] ile savaştayız, görünce vurun",
+   "{klan} savaş ilanı aldı :)",
+   "[{etiket}] hazır olun"
+  ],
+  "ittifak": [
+   "[{etiket}] ile ittifak yaptık",
+   "{klan} artık müttefik, vurmayın",
+   "[{etiket}] dostumuz artık"
+  ],
+  "baris": [
+   "[{etiket}] ile barış",
+   "savaş bitti, gg {klan}",
+   "barış yaptık"
+  ],
+  "tanik_patron": [
+   "gg {kim}",
+   "temiz kesti",
+   "boss gitti :D",
+   "eline sağlık {kim}",
+   "ben de vuracaktım :(",
+   "iyi kestin"
+  ],
+  "tanik_olum": [
+   "rip {ad}",
+   "geçmiş olsun {ad}",
+   "oof",
+   "f",
+   "tamir edip gel {ad}"
+  ],
+  "patron_oldurdum": [
+   "bossu kestim :)",
+   "boss düştü",
+   "güzel loot geldi"
+  ],
+  "posta_hosgeldin": [
+   "[{etiket}] klanına hoş geldin! sorun olursa yaz",
+   "hoş geldin, klan sohbetine de uğra",
+   "aramıza hoş geldin, birlikte kasarız"
+  ],
+  "posta_grup_evet": [
+   "olur, oyunda görünce davet at",
+   "tabi, ikimiz de girince inv at",
+   "olur, akşam girince yaz bana"
+  ],
+  "posta_grup_hayir": [
+   "bu ara solo kasıyorum, kusura bakma",
+   "şu an olmaz, görevlerim var",
+   "bu hafta pek vaktim yok"
+  ],
+  "posta_cevap": [
+   "mesajını gördüm, oyunda yaz",
+   "selam, aldım mesajını",
+   "tmm, oyunda konuşuruz"
+  ],
+  "duello_kabul": [
+   "{harita} gel bekliyorum",
+   "tamam {harita}, hazır ol",
+   "gel {harita} görelim seni"
+  ],
+  "duello_ayni": [
+   "aynı firmadayız kanka",
+   "kendi firmamı vurmam",
+   "aynı taraftayız :D"
+  ],
+  "duello_ret": [
+   "şu an olmaz",
+   "sonra belki",
+   "uğraşamam şimdi"
+  ],
+  "ozel_selam": [
+   "selam {ad} hoş geldin",
+   "oo {ad} naber",
+   "{ad} geldin mi",
+   "selam kanka"
+  ],
+  "ozel_grup": [
+   "{harita} kasıyorum, gruplaşalım mı?",
+   "görev yapcam, gelir misin?",
+   "grup olalım mı {ad}?"
+  ],
+  "ozel_sohbet": [
+   "nasıl gidiyor?",
+   "yeni bişey aldın mı?",
+   "hala kasıyor musun?"
+  ],
+  "grup_laf": [
+   "nereye gidiyoruz?",
+   "güzel kestik",
+   "bi tamir olayım",
+   "şu bossa bakalım mı?",
+   "iyi gidiyor"
+  ],
+  "pm_cevap": [
+   "naber, ne lazım?",
+   "buradayım, söyle",
+   "selam, yazdın?"
+  ],
+  "inv_me": [
+   "inv at",
+   "davet at bana",
+   "sen at daveti",
+   "inv me",
+   "at davet geliyorum"
+  ],
+  "davet_attim": [
+   "attım davet",
+   "davet geldi mi",
+   "inv attım",
+   "tmm attım"
+  ],
+  "zaten_grupta": [
+   "zaten gruptayım",
+   "grubum var şu an",
+   "başka grupla kasıyorum"
+  ],
+  "klan_basvur": [
+   "[{etiket}] başvur",
+   "[{etiket}] başvur kabul ederim",
+   "bizim klana başvur [{etiket}]"
+  ],
+  "klan_uye": [
+   "[{etiket}] klanındayım, liderimiz {lider}",
+   "[{etiket}] e başvur, {lider} bakıyor başvurulara"
+  ],
+  "klan_yok": [
+   "klanım yok",
+   "klansızım şu an",
+   "bilmiyorum klan arıyorum ben de"
+  ],
+  "klana_basvurdum": [
+   "başvurdum",
+   "tmm başvurdum",
+   "başvurdum kabul et"
+  ],
+  "nerede": [
+   "{harita} deyim",
+   "{harita}",
+   "{harita} da kasıyorum"
+  ],
+  "geliyorum": [
+   "geliyorum",
+   "tmm geliyorum {harita}",
+   "yoldayım"
+  ],
+  "gelemem": [
+   "gelemem oraya",
+   "oraya giremiyorum",
+   "şu an gelemem"
+  ],
+  "arkadas_tamam": [
+   "ekledim",
+   "tmm ekledim",
+   "attım istek"
+  ],
+  "selam": [
+   "selam",
+   "slm herkese",
+   "merhaba",
+   "sa",
+   "selamlar",
+   "iyi akşamlar",
+   "kimler var",
+   "günaydın millet"
+  ],
+  "seviye": [
+   "{seviye} oldum sonunda",
+   "lvl {seviye} :D",
+   "yeni level geldi {seviye}",
+   "level {seviye} oldum"
+  ],
+  "yeni_gemi": [
+   "{gemi} aldım sonunda",
+   "yeni gemi: {gemi} :)",
+   "{gemi} geldi beyler",
+   "sonunda {gemi}"
+  ],
+  "oldurdum": [
+   "gg",
+   "gg wp",
+   "ez",
+   "kolay oldu",
+   "bir dahakine",
+   "yine gel",
+   "gg :)"
+  ],
+  "oldum": [
+   "gg",
+   "şanslıydın",
+   "rövanş?",
+   "bekle sen",
+   "tamir bitsin görüşürüz",
+   "ya lag yaptı",
+   "iyi oynadın"
+  ],
+  "oldum_kizgin": [
+   "seni bulcam",
+   "unutmicam bunu",
+   "hep zayıfları mı vuruyorsun",
+   "klanla gelirim"
+  ],
+  "grup_ara": [
+   "{harita} grup var mı",
+   "grup arıyorum {harita}",
+   "kim {harita} da kasıyor",
+   "birlikte görev yapan?"
+  ],
+  "klan_alim": [
+   "[{etiket}] {klan} üye alıyor, lvl {seviye}+ başvurun",
+   "{klan} klanına aktif oyuncular aranıyor",
+   "[{etiket}] alım var pm"
+  ],
+  "ticaret": [
+   "müzayedede {esya} kimse almasın :D",
+   "açık artırma yine pahalı",
+   "kredi kasmak için en iyi yer neresi"
+  ],
+  "genel": [
+   "bu event ne zaman bitiyor",
+   "x-4 te npc çok",
+   "lag var mı sizde de",
+   "uridium kasmak çok zor",
+   "boss çıktı mı",
+   "kimse yok mu",
+   "kalkan mı lazer mi",
+   "ilk goliathımı ne zaman alcam ya"
+  ],
+  "cikis": [
+   "bb",
+   "ben kaçtım",
+   "görüşürüz",
+   "yatıyorum iyi geceler",
+   "bye"
+  ],
+  "cevap_selam": [
+   "as",
+   "selam",
+   "slm",
+   "merhaba {ad}",
+   "hoş geldin",
+   "selam knk"
+  ],
+  "cevap_soru": [
+   "bilmem",
+   "emin değilim",
+   "bence evet",
+   "sanmam",
+   "wikide yazıyordu",
+   "bilmiyorum valla",
+   "olabilir"
+  ],
+  "cevap_evet": [
+   "tamam geliyorum",
+   "olur",
+   "geliyorum",
+   "tmm bekle",
+   "yoldayım",
+   "ok"
+  ],
+  "cevap_hayir": [
+   "şu an olmaz",
+   "meşgulüm",
+   "sonra",
+   "görevdeyim",
+   "yok sağol",
+   "kusura bakma"
+  ],
+  "cevap_hakaret": [
+   "sensin",
+   "tamam",
+   "ok",
+   "konuşma gel savaş",
+   ":)"
+  ],
+  "tesekkur": [
+   "sağol",
+   "tşk",
+   "eyvallah",
+   "teşekkürler"
+  ],
+  "yardima_gidiyor": [
+   "{harita} geliyorum",
+   "yoldayım {harita}",
+   "dayan geliyorum",
+   "kaç kişiler"
+  ]
+ },
+ "kisaltma": [
+  [
+   "selam",
+   "slm"
+  ],
+  [
+   "merhaba",
+   "mrb"
+  ],
+  [
+   "tamam",
+   "tmm"
+  ],
+  [
+   "teşekkürler",
+   "tşk"
+  ],
+  [
+   "geliyorum",
+   "gelyrm"
+  ],
+  [
+   "kardeşim",
+   "knk"
+  ],
+  [
+   "değil",
+   "diil"
+  ],
+  [
+   "ne haber",
+   "nbr"
+  ],
+  [
+   "bilmiyorum",
+   "bilmiom"
+  ]
+ ],
+ "ascii": {
+  "ç": "c",
+  "ğ": "g",
+  "ı": "i",
+  "ö": "o",
+  "ş": "s",
+  "ü": "u",
+  "Ç": "C",
+  "Ğ": "G",
+  "İ": "I",
+  "Ö": "O",
+  "Ş": "S",
+  "Ü": "U"
+ },
+ "ascii_oran": 0.55,
+ "niyet": {}
+}

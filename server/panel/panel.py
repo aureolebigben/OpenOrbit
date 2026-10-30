@@ -51,6 +51,8 @@ from guncelleme import Guncelleyici, GuncellemeHatasi  # noqa: E402
 from arkadas import Arkadas, ArkadasHatasi  # noqa: E402
 from coklu import Coklu, CokluHatasi  # noqa: E402
 import dunyalar as DW          # noqa: E402
+import botlar as BT            # noqa: E402  (Botlar sayfası: bot paketleri)
+import llm_kurulum as LLMK     # noqa: E402  (Gelişmiş bot kipinin dil modeli)
 
 SURUM = '1.0'
 DISCORD = 'https://discord.com/invite/openorbit'   # topluluk sunucusu (Panel sayfası, README); kalıcı davet
@@ -189,6 +191,11 @@ def world_file(slot, arkadas=False):
     return DW.dosya_yolu(world_id(slot, arkadas))
 
 
+def bot_file(slot, arkadas=False):
+    """Sunucunun bot paketi (Botlar sayfası; DO_BOT): kaydın dünyasına atanmış paket ya da None."""
+    return BT.dosya_yolu(BT.dunya_paketi(world_id(slot, arkadas) or DW.STANDART))
+
+
 def world_info(wid):
     """Oyna sayfasının dünya çipi: {id, ad, kapak, degisiklik}; silinmiş dünya standart sayılır."""
     try:
@@ -224,6 +231,12 @@ def client_folder():
 # ------------------------------------------------------------------ oyun menüleri (Mağaza)
 # Oyun açıkken panel oyunu oyun sunucusunun yerel kanalından değiştirir (server/panel_kanali.py; anahtar günlük klasöründe).
 # Görseller istemcinin BepInEx eklentisinin dökümü (eklenti/Gorseller.cs: <istemci>/BepInEx/openorbit/gorsel), /oyun_gorsel/ altında.
+def paket_acik(pid):
+    """Bot paketi şu an çalışan oyunda mı."""
+    return bool(YON.running() and getattr(YON, 'bot', None) and BT.dosya_yolu(pid)
+                and YON.bot[0] == os.path.normcase(BT.dosya_yolu(pid)))
+
+
 def oyun_kanali(yol, govde=None):
     k = read_json(os.path.join(YOL.LOGS, 'panel_kanali.json'), None)
     if not k or not YON.running():
@@ -277,6 +290,7 @@ def eski_istemciyi_sil(eski, yeni):
 
 
 DL = Indirici(ROOT, IST.check, log, on_done=_downloaded)       # oyun istemcisini indirme (indirme.py)
+LLM = LLMK.LlmKurulum(log)                                       # botların dil modeli (llm_kurulum.py)
 
 
 def _dl_pct(st):
@@ -629,7 +643,7 @@ def open_extra(b):
             raise Hata(_('Sunucu tek oyunculu açıldı: ek istemci için oyunu kapatıp yeniden OYNA\'ya bas.'))
         log('çoklu istemci: sunucu çok oturumlu yeniden başlatılıyor')
         YON.start_servers(KAY.profile(YON.slot), settings_file(YON.slot), kontrol=bool(AY.read(settings_file(YON.slot)).get('kontrol')), slot=YON.slot,
-                          coklu=coklu_ortam(), dunya=world_file(YON.slot))
+                          coklu=coklu_ortam(), dunya=world_file(YON.slot), bot=bot_file(YON.slot))
     return COK.ac(slot, client_folder(), YON.slot)
 
 
@@ -704,7 +718,7 @@ def launch(sadece_sunucu=False, arkadas=False):
         arkadas = arkadas or (YON.running() and YON.arkadas)    # açık arkadaş sunucusu Oyna ile kapanmaz (misafirler düşmesin)
         ark_env = ARK.host_ortam() if arkadas else None
         coklu = None if arkadas else (coklu_ortam() if coklu_istenir(slot) else None)
-        restart = YON.needs_restart(prof, ark_env, coklu, world_file(slot, arkadas))
+        restart = YON.needs_restart(prof, ark_env, coklu, world_file(slot, arkadas), bot_file(slot, arkadas))
         if restart and COK.canli():
             raise Hata(_('Ek istemciler açıkken sunucu yeniden başlatılamaz: önce onları kapatın.'))
         if CFG.get('yedek_acilista') and not same:
@@ -718,7 +732,7 @@ def launch(sadece_sunucu=False, arkadas=False):
         _step((_('Arkadaş sunucusu başlatılıyor') if arkadas else _('Sunucular başlatılıyor'))
               if not YON.running() or restart else _('Sunucular açık'))
         YON.start_servers(prof, settings_file(slot), kontrol=bool(AY.read(settings_file(slot)).get('kontrol')), slot=slot, arkadas=ark_env,
-                          coklu=coklu, dunya=world_file(slot, arkadas))
+                          coklu=coklu, dunya=world_file(slot, arkadas), bot=bot_file(slot, arkadas))
         if not sadece_sunucu:
             _step(_('Oyun açılıyor'))
             try:                                      # dünyanın görev başlıkları (eklentinin GorevMetinleri yaması okur)
@@ -792,7 +806,7 @@ def idle(strict=False):
     """Güncelleme kurulabilir mi: oyun, sunucular, başlatma, istemci indirmesi, protokol aracı ve testler durmuş (strict: panelin
     açmadığı DarkOrbit istemcisi de yok; tasklist çalışır)."""
     busy = (YON.running() or YON.client_alive() or STATE['oyna']['calisiyor'] or DL.running() or UYAR.state()['calisiyor']
-            or TEST.calisiyor or ARK.aktif() or COK.canli() or MOT.running() or YAM.running())
+            or TEST.calisiyor or ARK.aktif() or COK.canli() or MOT.running() or YAM.running() or LLM.running())
     return not busy and not (strict and IST.running_clients())
 
 
@@ -1265,7 +1279,100 @@ def dunya_post(path, b):
     raise Hata(_('Bilinmeyen istek.'))
 
 
+def botlar_durumu():
+    users = world_users()
+    dunyalar = [{'id': w['id'], 'ad': w['ad'], 'kapak': w['kapak'], 'standart': w['standart'],
+                 'pilotlar': [u.get('pilot') or u.get('ad') for u in w.get('kullananlar') or []]} for w in DW.liste(users)]
+    return {'liste': BT.liste(), 'dunyalar': dunyalar, 'kipler': BT.KIPLER, 'izinler': BT.IZINLER, 'siniflar': BT.BASIT_SINIFLAR,
+            'ayarlar': {k: {'tur': v[0], 'en_az': v[1], 'en_cok': v[2], 'varsayilan': v[3]} for k, v in BT.AYARLAR.items()},
+            'sunucu_acik': YON.running(), 'sunucu_paketi': getattr(YON, 'bot', None) and YON.bot[0], 'oyun_ayarlari': bot_oyun_ayarlari()}
+
+
+def bot_oyun_ayarlari():
+    """Botların oyun ayarı profilleri (bot/oyun_ayari.py): hazır profiller ve Özel profilin alanları (oyun ayarlarının adlarıyla)."""
+    from bot import oyun_ayari as OA
+    hazir = [{'id': k, 'ad': AY.HAZIR[k]['ad'], 'aciklama': AY.HAZIR[k]['aciklama']} for k in OA.PROFILLER if k in AY.HAZIR]
+    alanlar = [{'anahtar': k, 'ad': AY.BY_KEY[k]['ad'], 'aciklama': AY.BY_KEY[k]['aciklama'], 'en_az': AY.BY_KEY[k].get('min', 0),
+                'en_cok': min(10, AY.BY_KEY[k].get('max', 10))} for k in OA.ALANLAR]
+    return {'hazir': hazir, 'alanlar': alanlar}
+
+
+def oyuncu_adlari():
+    return [k.get('pilot') for k in KAY.list() if k.get('pilot')]
+
+
+def bot_get(path, q):
+    if path == '/api/botlar':
+        return botlar_durumu()
+    if path == '/api/bot/llm':
+        return LLM.state()
+    if path == '/api/bot':
+        pid = q.get('id')
+        d = BT.ayrinti(pid)
+        p = BT.dosya_yolu(pid)
+        acik = bool(YON.running() and getattr(YON, 'bot', None) and p and YON.bot[0] == os.path.normcase(p))
+        return dict(d, sunucu_bu_pakette=acik, yeniden_gerekli=acik and SR.bot_imzasi(p) != YON.bot)
+    raise Hata(_('Bilinmeyen istek.'))
+
+
+def bot_post(path, b):
+    if path.startswith('/api/bot/llm/'):           # dil modeli: kur, durdur, sil, test
+        islem = {'kur': LLM.start, 'durdur': LLM.cancel, 'sil': LLM.sil, 'test': LLM.test}.get(path.rsplit('/', 1)[1])
+        if islem is None:
+            raise Hata(_('Bilinmeyen istek.'))
+        if path.endswith('/sil') and YON.running():
+            raise Hata(_('Önce oyunu kapat.'))
+        try:
+            return islem()
+        except LLMK.IndirmeHatasi as e:
+            raise Hata(str(e))
+    if path == '/api/bot/olustur':
+        pid = BT.olustur(b.get('ad'), b.get('aciklama', ''), b.get('dunya'), b.get('kip', 'normal'), b.get('gelisim', 'progressive'),
+                         b.get('adet', 60), b.get('dil', 'karisik'), b.get('firma_dagilimi') or (1, 1, 1), b.get('ayarlar') or {},
+                         oyuncular=oyuncu_adlari(), ad_dili_=b.get('ad_dili'))
+        return dict(botlar_durumu(), yeni=pid)
+    pid = b.get('id')
+    if path == '/api/bot/guncelle':
+        BT.guncelle(pid, ad=b.get('ad'), aciklama=b.get('aciklama'), kip=b.get('kip'), gelisim=b.get('gelisim'), ayarlar=b.get('ayarlar'))
+        return bot_get('/api/bot', {'id': pid})
+    if path == '/api/bot/ata':                      # paketi dünyaya ata (o dünyanın eski paketi boşa çıkar)
+        did = b.get('dunya') or None
+        if did and not DW.var(did):
+            raise Hata(_('Dünya bulunamadı.'))
+        BT.ata(pid, did)
+        return botlar_durumu()
+    if path == '/api/bot/kadro':
+        if paket_acik(pid) and (b.get('yeniden') or int(b.get('adet') or 0) < len(BT.oku(pid)['kadro'])):
+            raise Hata(_('Bu paket oyunda açık: önce oyunu kapat.'))     # çalışan oyun eski kadroyla durumu yeniden yazar
+        BT.kadro(pid, adet=b.get('adet'), dil=b.get('dil'), firma_dagilimi=b.get('firma_dagilimi'), yeniden=bool(b.get('yeniden')),
+                 oyuncular=oyuncu_adlari(), ad_dili_=b.get('ad_dili'))
+        return bot_get('/api/bot', {'id': pid})
+    if path == '/api/bot/ad':
+        BT.bot_adi(pid, int(b.get('no') or 0), b.get('ad'), oyuncular=oyuncu_adlari())
+        if paket_acik(pid):
+            try:
+                oyun_kanali('/bot/ad_kaydi', {})           # oyunda hemen: bot, klanlar, rehberler
+            except Hata:
+                pass                                       # oyuna girilmemiş: sonraki açılışta uygulanır
+        return bot_get('/api/bot', {'id': pid})
+    if path == '/api/bot/sifirla':
+        if paket_acik(pid):
+            raise Hata(_('Bu paket oyunda açık: önce oyunu kapat.'))
+        BT.sifirla(pid)
+        return bot_get('/api/bot', {'id': pid})
+    if path == '/api/bot/sil':
+        if paket_acik(pid):
+            raise Hata(_('Bu paket oyunda açık: önce oyunu kapat.'))
+        BT.sil(pid)
+        return botlar_durumu()
+    if path == '/api/bot/sunucu_yeniden':
+        return h_post('/api/sunucu/yeniden', {})
+    raise Hata(_('Bilinmeyen istek.'))
+
+
 def h_get(path, q):
+    if path.startswith('/api/bot'):                 # Botlar (botlar.py)
+        return bot_get(path, q)
     if path.startswith('/api/dunya'):               # Dünya Editörü (dunyalar.py)
         return dunya_get(path, q)
     if path == '/api/durum':
@@ -1356,6 +1463,8 @@ def h_get(path, q):
 
 
 def h_post(path, b):
+    if path.startswith('/api/bot/'):                # Botlar (botlar.py)
+        return bot_post(path, b)
     if path.startswith('/api/dunya') or path == '/api/kayitlar/dunya':      # Dünya Editörü (dunyalar.py)
         return dunya_post(path, b)
     if path == '/api/oyun/al':                      # oyun menüleri: mağazadan satın alma (istemcinin isteğiyle aynı yoldan)
@@ -1418,7 +1527,7 @@ def h_post(path, b):
         coklu = None if ark_env else (coklu_ortam() if (YON.running() and YON.coklu) or coklu_istenir(slot) else None)
         YON.stop_servers()
         YON.start_servers(KAY.profile(slot), settings_file(slot), kontrol=bool(AY.read(settings_file(slot)).get('kontrol')), slot=slot, arkadas=ark_env,
-                          coklu=coklu, dunya=world_file(slot, bool(ark_env)))
+                          coklu=coklu, dunya=world_file(slot, bool(ark_env)), bot=bot_file(slot, bool(ark_env)))
         return YON.status()
     if path == '/api/istemci/kapat':
         YON.stop_client()

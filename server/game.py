@@ -85,6 +85,7 @@ import topluluk as TP
 import klan as KL
 import grup as GR
 import rehber as RH
+import bot.yonetici as BOT  # noqa: E402  (bot oyuncular: belgeler/BOTLAR.md)
 from eski_protokol import legacy, parse as legacy_parse  # noqa: E402         # noqa: E402
 
 ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
@@ -1483,6 +1484,7 @@ def stop_gracefully():
         if CURRENT is not None:
             CURRENT.play_time()
         PROFIL.save(force=True)
+        BOT.kapat()                       # bot paketinin durumu
         if CO.acik():                     # misafirlerin son hâli panellerine (bekleyen yoklamalara) verilir, ek oyuncularınki yuvalarına
             for s in list(OTURUMLAR):
                 if s.misafir is not None or s.yerel is not None:
@@ -1513,6 +1515,8 @@ def main():
         KL.configure(os.path.join(YOL.SAVE, 'klanlar.json'))     # ortak klanlar: çevrimdışı üyeye olanlar sonraki girişte
     SOHBET = SH.Sohbet(log, adres=adres)
     SOHBET.start()                # yerel sohbet (7771); istemci girişteki ChatParamCommand ile buraya bağlanır
+    if os.environ.get('DO_BOT'):
+        BOT.sunucu(os.environ['DO_BOT'], log)     # Botlar sayfasının paketi (dünyaya atanmış)
     threading.Thread(target=autosave, daemon=True).start()
     if os.environ.get('DO_DUNYA'):
         threading.Thread(target=dunya_izle, daemon=True).start()

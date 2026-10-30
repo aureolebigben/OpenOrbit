@@ -223,6 +223,7 @@ const PAGES = [
   { id: 'kayitlar', ad: N('Kayıtlar'), ic: 'save', sub: N('Kayıt yuvaları, yedekler, kopyalama, içe ve dışa aktarma.') },
   { id: 'ayarlar', ad: N('Oyun Ayarları'), ic: 'sliders', sub: N('Çarpanlar ve kurallar. Kendiliğinden kaydedilir; çoğu oyun açıkken anında uygulanır.') },
   { id: 'dunya', ad: N('Dünya Editörü'), ic: 'globe', sub: N('Haritaları, uzaylıları, görevleri, mağazayı ve açık artırmayı değiştir; kendi dünyalarını oluştur.') },
+  { id: 'botlar', ad: N('Botlar'), ic: 'bot', beta: true, sub: N('Gerçek oyuncu gibi gelişen, konuşan ve klan kuran botlar: paket oluştur, bir dünyaya ata.') },
   { id: 'etkinlikler', ad: N('Etkinlikler'), ic: 'calendar', sub: N('Her etkinlik takvime göre ya da elle açık / kapalı.') },
   { id: 'takvim', ad: N('Etkinlik Takvimi'), ic: 'agenda', sub: N('Etkinlikler ve seansları saatlik, günlük, haftalık ve aylık görünümde (yerel saat).') },
   { id: 'istemci', ad: N('İstemci'), ic: 'monitor', sub: N('Oyun klasörü, sürüm denetimi ve görüntü seçenekleri.') },
@@ -241,7 +242,8 @@ function buildNav() {
   const nav = $('#nav');
   const navBtn = p => h('button', { 'data-page': p.id, class: p.id === S.page ? 'active' : null, onclick: () => go(p.id) },
     p.oyun && OG.dizin?.sprite[p.sprite] ? sprite(p.sprite, 18) : icon(p.ic),
-    h('span', null, T(p.ad)), h('span', { class: 'badge', id: 'nav-badge-' + p.id, style: { display: 'none' } }));
+    h('span', null, T(p.ad)), p.beta ? h('span', { class: 'beta-etiket' }, 'Beta') : null,
+    h('span', { class: 'badge', id: 'nav-badge-' + p.id, style: { display: 'none' } }));
   nav.replaceChildren(...PAGES.filter(p => !p.oyun).map(navBtn),
     h('div', { class: 'nav-oyun', id: 'nav-oyun', style: { display: 'none' } }, h('div', { class: 'nav-baslik' }, T('Oyun içi')),
       PAGES.filter(p => p.oyun).map(navBtn)));
@@ -253,7 +255,7 @@ function go(id, push = true) {
   if (push && location.hash !== '#' + id) history.replaceState(null, '', '#' + id);
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('active', b.dataset.page === id));
   const p = PAGES.find(x => x.id === id);
-  $('#page-title').textContent = T(p.ad); $('#page-sub').textContent = T(p.sub);
+  $('#page-title').replaceChildren(T(p.ad), ...(p.beta ? [h('span', { class: 'beta-etiket' }, 'Beta')] : [])); $('#page-sub').textContent = T(p.sub);
   $('#content').replaceChildren(h('div', { class: 'empty' }, h('div', { class: 'spin', style: { margin: '30px auto' } })));
   RENDER[id]();
 }
@@ -2657,7 +2659,7 @@ async function muzayedeOlayTick() {
 }
 
 const RENDER = { oyna: renderOyna, arkadas: renderArkadas, kayitlar: () => renderKayitlar(), ayarlar: renderAyarlar, etkinlikler: () => renderEtkinlikler(), istemci: () => renderIstemci(),
-  takvim: enterTakvim, sunucu: renderSunucu, panel: renderPanel, dunya: () => renderDunya(), magaza: renderMagaza, hangar: renderHangar, skylab: renderSkylab, muzayede: renderMuzayede };
+  takvim: enterTakvim, sunucu: renderSunucu, panel: renderPanel, dunya: () => renderDunya(), botlar: () => renderBotlar(), magaza: renderMagaza, hangar: renderHangar, skylab: renderSkylab, muzayede: renderMuzayede };
 
 // ------------------------------------------------------------------ başlangıç
 async function boot() {

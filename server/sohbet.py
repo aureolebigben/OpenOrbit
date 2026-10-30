@@ -242,6 +242,8 @@ class Sohbet:
         self.sock = None
         self.running = False
         self.iz = None                    # canlı test izi: iz(yön, tür, yük) (game.py --kontrol bağlar)
+        self.bot_kanca = None             # (yol, mesaj, gönderen) -> None: botlar oda mesajlarını okur (bot/toplum.kaydol)
+        self.bot_fisilti = None           # (alıcının adı, mesaj, gönderen) -> alıcı bot muydu
         self.odalar = {}                  # özel oda adı ('private_<ad>') -> {'kurucu': kimlik, 'uyeler': set, 'davetli': set}
         self.rapor_yolu = RAPOR_YOLU
 
@@ -451,6 +453,8 @@ class Sohbet:
             return
         self.log('sohbet: %s: %s' % (path, msg))
         self.broadcast(path, msg, c.ep, c.user)
+        if self.bot_kanca is not None:
+            self.bot_kanca(path, msg, dict(c.user))      # botlar okur (bot/yonetici.sohbet_gelen)
 
     def whisper(self, c, path, data, rid):
         """Fısıltı: istemci /whisper/<InstanceID>_<alıcının adı>/ yoluna yazar, alıcının istemcisi kendi adıyla bu yolu dinler
@@ -463,6 +467,11 @@ class Sohbet:
         if not hits:                       # başka örnek kimliği (InstanceID) ile dinleyen: adın kendisi
             ad = '_' + want[len('/whisper/'):].split('_', 1)[-1]
             hits = [(x, p) for x in conns for p in x.handlers if p.startswith('/whisper/') and p.lower().endswith(ad)]
+        if not hits and c.user and msg and self.bot_fisilti is not None and                 self.bot_fisilti(want[len('/whisper/'):].split('_', 1)[-1].rstrip('/'), msg, dict(c.user)):
+            self.log('sohbet: fısıltı -> bot %s: %s' % (path, msg))       # alıcı bot (bot/yonetici.fisilti_gelen)
+            if rid is not None:
+                c.send({'t': T_RESPONSE, 'requestId': rid})
+            return
         if not c.user or not msg or not hits:
             self.log('sohbet: fısıltı yerine ulaşmadı %s' % path)
             if rid is not None:
@@ -475,6 +484,17 @@ class Sohbet:
                     'endpointObject': {'path': c.path, 'endpoint': c.ep, 'data': c.user}})
         if rid is not None:
             c.send({'t': T_RESPONSE, 'requestId': rid})
+
+    def bot_fisildar(self, alici, msg, ep, user):
+        """Bot oyuncuya fısıldar: alıcının kendi fısıltı yolunu dinleyen bağlantılarına (whisper'ın teslimi gibi) -> ulaştı mı."""
+        ad = '_' + str(alici).lower() + '/'
+        with self.lock:
+            hits = [(x, p) for x in self.conns.values() if x.user for p in x.handlers
+                    if p.startswith('/whisper/') and p.lower().endswith(ad)]
+        for x, p in hits:
+            x.send({'t': T_MESSAGE, 'path': p, 'data': {'msg': str(msg)[:500], 'sentAt': str(int(time.time() * 1000))},
+                    'endpointObject': {'path': '/endpoint/%s/' % ep, 'endpoint': ep, 'data': user}})
+        return bool(hits)
 
     def broadcast(self, path, msg, ep, user):
         out = {'t': T_MESSAGE, 'path': path, 'data': {'msg': msg, 'sentAt': str(int(time.time() * 1000))},

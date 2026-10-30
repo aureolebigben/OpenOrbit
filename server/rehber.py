@@ -33,6 +33,8 @@ def mod(_cls, **f):
 
 
 def kayit(p):
+    import ad_kaydi as AK
+    AK.profil_uygula(p)                                  # panelde adı değişen ya da silinen botlar (ad_kaydi.py)
     with p.lock:
         return _kayit(p)
 

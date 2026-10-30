@@ -9,6 +9,7 @@ ada göre tutulur.
 import cok_oyunculu as CO
 
 OYUN = None          # game modülü (game.py bağlar): PROFIL, CURRENT
+BOTLAR = None        # () -> {kimlik: Kisi}: bot paketinin pilotları (bot/toplum.kaydol)
 
 
 class Kisi:
@@ -54,6 +55,9 @@ def hepsi():
         if m.profil is not None:
             s = m.session
             out[m.profil.user_id] = Kisi(m.profil, s if s is not None and s.profil is m.profil else None)
+    if BOTLAR is not None:
+        for uid, k in BOTLAR().items():
+            out.setdefault(uid, k)
     return out
 
 
