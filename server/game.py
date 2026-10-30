@@ -530,7 +530,7 @@ class Session:
         """Dünyanın görev olayları: görevler ve Pass görevleri (öldürme Pass'lere başarım olayından gider; grup üyesinin aynı
         haritada öldürdüğü uzaylı başarım değil, yalnız görev: Pass, etkinlik ve Urgent Missions görevleri de buradan)."""
         grup = kind == 'kill' and kw.get('grup')
-        if kind in ('cargo', 'loot', 'sell', 'bonus', 'map') or grup:
+        if kind in ('cargo', 'loot', 'sell', 'bonus', 'map', 'ore_update') or grup:     # ore_update: Season Pass USE_ORE_UPDATE görevleri
             self.pass_event(kind, **kw)
             msgs = self.ek.event(kind, kw) + (self.ek.acil.kill(kw.get('npc')) if grup else [])
             if msgs:

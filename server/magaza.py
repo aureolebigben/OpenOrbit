@@ -826,12 +826,14 @@ class Magaza:
                 # seviye düğmeleri: istemci (UIShopSystem.SetRightNumberLevel) düğme i'yi i <= MaxNum ise açıyor, MaxNum = alınabilecek
                 # adet ile maxAmount'un küçüğü (3 ise hepsi). Kayıttaki maxAmount 1'di (hesapta P.E.T. yoktu), sunucu değiştirmiyordu:
                 # P.E.T. seviyesi ne olursa olsun yalnız 1. seviye seçiliyordu (kullanıcı 2026-10-18). maxAmount = P.E.T.'in izin verdiği
-                # en yüksek seviye (wiki: 2. seviye P.E.T. 4, 3. seviye 8); sunucunun bilmediği "3X" kademesi gösterilmez
-                # Protokollerin 4. seviyesi (P.E.T. seviyesi 20): kayıttaki LevelDataList'in 4. kademesi, levelGrades kayıttaki gibi
-                # [1,2,3]; maxAmount 4 istemcide 4. düğmeyi açıyor mu canlıda doğrulanmadı
+                # en yüksek seviye (wiki: 2. seviye P.E.T. 4, 3. seviye 8, 3X 20). Satılan 4. kademesi olan dişliler "3X" düğmesiyle
+                # (kayıt: G-EL1/G-RL1 levelGrades [1,2,3,3X]); protokollerin 4. kademesi mağazada satılmaz, kayıttaki gibi [1,2,3]
                 lv = self.pet.d['seviye'] if self.pet.owned else 0
-                top = max(n for n in range(1, len(prices) + 1) if lv >= PETM.level_need(n))
-                it.update(maxAmount=top, maxlevel=top, levelGrades='[%s]' % ','.join(str(n) for n in range(1, min(len(prices), 3) + 1)))
+                grades = [str(n) for n in range(1, min(len(prices), 3) + 1)]
+                if len(prices) > 3 and prices[3] and it['lootId'] in PETM.GEARS:
+                    grades.append('3X')
+                top = min(len(grades), max(n for n in range(1, len(prices) + 1) if lv >= PETM.level_need(n)))
+                it.update(maxAmount=top, maxlevel=top, levelGrades='[%s]' % ','.join(grades))
             if prices and it.get('LevelDataList'):
                 # seviye düğmesinin fiyatı ve metni (ClickToggle: LevelDataList[seviye]) alınanla aynı: kayıttakiler kaldı, G-HR1'de
                 # 15.000 / 32.000 görünüp 32.000 / 55.000 alınıyordu; panelin çarpanı da burada

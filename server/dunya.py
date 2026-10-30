@@ -230,6 +230,7 @@ class NPC:
         self.summoned = False               # çağrılan ya da ölünce doğan: yeniden doğmaz
         self.children = set()               # çağırdıkları (kimlik)
         self.guard = None                   # (çağıranın kimliği, koru) : çağıranın çevresinde dolaşır (Cubikon'un Protegit'leri)
+        self.yol = None                     # (x, y, varış anı): gezgin (Hitac) portaldan portala düz uçar (etkinlik_harita.rover)
         self.last_hit = 0.0                 # son vurulduğu an (savaş dışı yenilenme)
         self.next_summon = 0.0
         self.next_regen = 0.0
@@ -2031,6 +2032,16 @@ class World:
                 elif what == 'enerji':
                     msgs += self.gg_energy(amount) if self.gg_energy else []      # Galaksi Kapısı üreticisinin ücretsiz enerjisi
                     RT.note(self.p, 'gg_extra_energy_got', count=amount)
+                elif not what.startswith('ammunition_'):
+                    # Dünya Editörü'nün cephane dışı ödülü (ABR, kaynak, ekipman): mağazanın ödül yolu (cephaneye yazılıyor, Assembly'de
+                    # görünmüyordu: oyuncu bildirimi 2026-10-30)
+                    RT.note(self.p, 'received_item', what, amount)
+                    if self.grant:
+                        msgs += self.grant(what, amount)
+                    else:
+                        self.p.add_resource(what, amount)
+                    if what.startswith('resource_collectable_'):
+                        msgs += self.quest('loot', loot=what, amount=amount)
                 else:
                     RT.note(self.p, 'received_item', what, amount)
                     self.p.add_ammo(what, amount)
@@ -3187,6 +3198,17 @@ class World:
         if now < n.next_summon:
             return
         n.children = {c for c in n.children if c in self.npcs and self.npcs[c].alive}
+        if v.get('hepsi_olunce') and n.ab.get('cagrildi'):
+            # yedekler ancak yardımcıların hepsi yok edilince, bekleme_sn sonra (Hitac; oyuncu bildirimi 2026-10-30: bekleme her
+            # çağrıdan sayılıyor, ölen her yardımcının yerine 1-2 dakikada yenisi geliyordu)
+            if n.children or n.ab.get('cagri_sirada', 0):
+                n.ab.pop('bos', None)
+                return
+            n.ab.setdefault('bos', now)
+            if now < n.ab['bos'] + v.get('bekleme_sn', 10):
+                return
+            n.ab.pop('bos')
+        n.ab['cagrildi'] = True
         room = (v.get('en_cok', v.get('adet', 1)) + (self.alien.extra_summons(n, now) if 'ofke' in n.davranis else 0) - len(n.children)
                 - n.ab.get('cagri_sirada', 0))
         if room <= 0:
@@ -4036,6 +4058,23 @@ class World:
         hidden = self.hero_dead or self.jumping
         hero_safe = zoned or hidden                 # peşini bırakma nedenleri; gizlenme yok: saldıran uzaylı EMP-01'e dek vazgeçmez (oyuncu bildirimi)
         spared = hero_safe or cloaked               # yeni saldırı başlatma nedenleri
+        if n.yol:                                   # gezgin: kovalamaz, rotasında sürer; menzildeki oyuncuya ateş eder
+            if now >= n.next_think and not n.etki.frozen(now):
+                tx, ty, until = n.yol
+                left = math.hypot(tx - nx, ty - ny)
+                if left > 50:
+                    v = min(n.speed(), max(30.0, left / max(1.0, until - now))) * n.etki.speed_factor(now)
+                    ms = n.mover.go(tx, ty, v, now)
+                    self.send([('MoveCommand', dict(userId=n.id, x=int(tx), y=int(ty), timeToTarget=ms))])
+                n.next_think = now + 10
+            if n.engaged or (self.aggressive(n) and not spared and dist < n.d.get('fark_mesafe', SAVAS['npc_fark_mesafe'])):
+                n.engaged = not hero_safe
+            if (n.engaged and not spared and dist <= self.npc_range(n) and now >= n.next_shot and n.d['hasar'] > 0
+                    and now >= self.invuln_until and not n.etki.frozen(now)):
+                self.npc_shoot(n, now)
+            elif n.firing and (dist > self.npc_range(n) or hero_safe):
+                self.alien_ceasefire(n)
+            return
         if getattr(n, 'pusu', None):                # pusudaki dalga grubu (echoes.lair): oyuncu yaklaşana ya da birini vurana dek yerinde
             if not (n.engaged or n.pusu['on'] or (not spared and dist <= n.pusu['r'])):
                 return

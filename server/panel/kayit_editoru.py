@@ -400,7 +400,7 @@ def gorunum(pr, m, asil=None):
                'yakit_azami': PETM.PET['azami_yakit'], 'azami_seviye': len(PETM.PET['seviyeler']) - 1, 'yikik': bool(petd.get('yikik')),
                'yuva': {y: m.pet.open_slots(y) for y in PETM.SLOTS}, 'yuva_azami': dict(PETM.PET['azami_yuva']),
                'heat': m.pet.heat_lv()}
-    cephane = [[l, int(n), next(t for pre, t in CEPHANE if l.startswith(pre))] for l, n in sorted(p.d.get('cephane', {}).items())]
+    cephane = [[l, int(n), next((t for pre, t in CEPHANE if l.startswith(pre)), 'diger')] for l, n in sorted(p.d.get('cephane', {}).items())]
     madenler = {m_['oreType']['typeValue']: m_['count'] for m_ in p.d.get('madenler', [])}
     cevherler = [[int(t), loot, int(madenler.get(int(t), 0))] for t, loot in sorted(MG.ESYA['cevherler']['turler'].items(), key=lambda kv: int(kv[0]))]
     simdi = time.time()

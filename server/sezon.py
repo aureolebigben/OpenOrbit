@@ -303,6 +303,10 @@ class Sezon:
     def level(self):
         return level_of(self.st.get('puan', 0))
 
+    def image(self):
+        """Pencerenin görseli: oynanan sezonunki (resmî CDN'de olmayanlarda kayıttaki)."""
+        return S['gorseller'].get(self.st.get('donem'), S['gorsel'])
+
     def status_code(self, qid):
         gold, done = MISSIONS[qid]['gold'], qid in self.st['tamam']
         if not gold:
@@ -315,7 +319,7 @@ class Sezon:
     def status_cmd(self, now=None, tips=False):
         st = self.st
         return ('SeasonPassStatusCommand', dict(pointsCost=list(COST), uridiumCost=list(UCOST), goldPass=bool(st.get('gold')),
-                                                showTips=tips, marketingImage=S['gorsel'], seasonName=S['ad'],
+                                                showTips=tips, marketingImage=self.image(), seasonName=S['ad'],
                                                 extGoldPass=bool(st.get('ext')),
                                                 timeToEventEnd=max(0, int(self.end() - (time.time() if now is None else now)))))
 
@@ -375,7 +379,7 @@ class Sezon:
             return []
         return [('SeasonPassRewardUnclaimedInfoCommand', dict(captainLimit=NV.D['azami_kadro'], captainPending=wait,
                                                               captainOwned=self.roster(), captainWarning=self.roster_full('captain_', wait),
-                                                              spcId=0, marketingImage=S['gorsel'], seasonName=S['ad']))]
+                                                              spcId=0, marketingImage=self.image(), seasonName=S['ad']))]
 
     # ------------------------------------------------------------ puan ve Gold Pass
     def add_points(self, n, bought=False):

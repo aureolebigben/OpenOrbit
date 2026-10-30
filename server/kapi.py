@@ -336,7 +336,9 @@ class Kapilar:
         if not G['hazir']:
             return -1
         pr = K['can_fiyatlari']
-        return int(round(pr[G['alinan_can']] * AY.carpan('kapi_fiyat'))) if G['alinan_can'] < len(pr) else -1     # panel
+        # sınırdan sonra da son fiyat: -1 giderse istemci (GalaxyGateComponentSystem.ParseGateLifePurchaseResponse) parçaları tam
+        # kapıyı "tamamlandı" sayıyor (oyuncu bildirimi 2026-10-30: 5 can alınca "Galaxy Gate … completed"); fazlası buy_life'ta reddedilir
+        return int(round(pr[min(G['alinan_can'], len(pr) - 1)] * AY.carpan('kapi_fiyat')))     # panel
 
     def money(self):
         return self.p.d['pilot'].get('uridium', 0)
@@ -672,6 +674,12 @@ class Kapilar:
         gid = f.get('gateId')
         key = BY_ID.get(gid)
         price = self.life_price(key) if key else -1
+        if price >= 0 and self.gate(key)['alinan_can'] >= len(K['can_fiyatlari']):
+            G = self.gate(key)                       # wiki: beş can satın alınabilir (5.000 … 80.000 U)
+            return [screen('You cannot buy more lives for this gate.'),
+                    ('GalaxyGateBuilderBuyLifeCommand', dict(samples=self.d['enerji'], multiplier=self.d['carpan'], gateId=gid or 0,
+                                                             errorCode=ERR_NONE, lifePrice=price, money=self.money(), gateMode=key,
+                                                             livesLeft=G['can']))]
         err = ERR_OTHER if price < 0 else ERR_MONEY if self.money() < price else ERR_NONE
         if not err:
             with self.p.lock:

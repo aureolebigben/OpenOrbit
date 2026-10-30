@@ -11931,7 +11931,23 @@
     null,
     4000
    ]
-  ]
+  ],
+  "gorseller": {
+   "2023-11": "ingame-news_Season-Pass-Nov-2023",
+   "2024-02": "ingame-news_Season-Pass-Feb-2024",
+   "2024-05": "ingame-news_Season-Pass-May-2024",
+   "2024-08": "ingame-news_Season-Pass-August-2024",
+   "2024-11": "ingame-news_Season-Pass-November-2024",
+   "2025-02": "ingame-news_Season-Pass-Feb-2025",
+   "2025-05": "ingame-news_Season-Pass-May-2025",
+   "2025-08": "ingame-news_Season-Pass-August-2025",
+   "2025-11": "ingame-news_Season-Pass-November-2025",
+   "2026-02": "ingame-news_Season-Pass-February-2026",
+   "2026-05": "ingame-news_Season-Pass-May-2026",
+   "2026-08": "ingame-news_Season-Pass-Aug-2026",
+   "2026-11": "ingame-news_Season-Pass-Nov-2026"
+  },
+  "_gorseller": "Sezonun Season Pass görseli (marketingImage): resmî CDN do_img/global/events/seasonPass/'de bulunanlar (2026-10-30 tarandı; ay adı kimi sezonda kısa, kimisinde uzun). 2023-05 ve 2023-08'in görseli CDN'de yok: kayıttaki gorsel"
  },
  "savas_bileti": {
   "passler": {

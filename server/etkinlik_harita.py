@@ -106,6 +106,20 @@ def route_at(k, g, now):
     return g['rota'][int((now - start) // g['sure_sn']) % len(g['rota'])]
 
 
+def route_leg(k, g, now):
+    """Gezginin bu haritadaki ayağı: (önceki harita, sonraki harita, bu haritadan ayrılış anı)."""
+    start = ROVER.setdefault(k, now)
+    i = int((now - start) // g['sure_sn'])
+    r = g['rota']
+    return r[(i - 1) % len(r)], r[(i + 1) % len(r)], start + (i + 1) * g['sure_sn']
+
+
+def gate_to(w, name):
+    """Bu haritada adı verilen haritaya giden portalın yeri ya da None."""
+    g = next((g for g in w.gates if g.get('hedef') is not None and H.name(g['hedef']) == name), None)
+    return (g['x'], g['y']) if g else None
+
+
 def fmt(t, mc):
     return t.replace('{x}', mc.lower().replace('-', ''))
 
@@ -274,12 +288,22 @@ class HaritaEtkinlik:
         name = H.name(w.map_id)
         for k, rk, g in [(k, rk, g) for k in sorted(TK.EVENTS) for rk, g in rovers(k)]:
             st = self.state(k).setdefault('gezgin', {})
-            alive = [i for i in st.get(rk, []) if i in w.npcs and w.npcs[i].alive]
+            # haritaya yeniden girince harita durumundan gelen gezgin de sayılır (yoksa ikincisi doğuyordu: canlı deneme 2026-10-30)
+            alive = [i for i, n in w.npcs.items() if n.alive and (i in st.get(rk, []) or n.tip == g['tur'])]
             at = route_at(rk, g, now) if TK.is_active(k, now) else None
             if at == name and not alive and g['tur'] in w.CFG_TYPES:
-                x, y = w.random_spot()
+                # darkorbitwiki (Hitac Mothership): "flies in a straight line between the ports and jumps to another map": önceki
+                # haritanın portalından girer, sonrakinin portalına düz uçar (oyuncu bildirimi 2026-10-30: rastgele yerde doğup
+                # süresi dolunca yok oluyordu). Varış: bu haritadaki süresinin sonu (sure_sn, uyarlama)
+                prev, nxt, until = route_leg(rk, g, now)
+                x, y = gate_to(w, prev) or w.random_spot()
                 n = w.spawn_npc_at(g['tur'], x, y)
                 n.summoned = True                        # dünya yeniden doğurmaz, etkinlik bitince kalkmaz (rota yönetir)
+                tx, ty = gate_to(w, nxt) or w.random_spot()
+                n.yol = (tx, ty, until)
+                w.npc_summon(n, now, hit=False)          # fandom (Hitac-Mothership): altı yardımcısıyla gelir
+                for c in n.children:
+                    w.npcs[c].engaged = False            # oyuncu yaklaşınca ya da vurunca saldırırlar (uzaktakini kovalamasınlar)
                 alive = [n.id]
                 out.append(screen('key:msg_npc_spawned_map', big=True, NPC_NAME=n.d['ad'], MAP=name))
                 w.log('   gezgin %s geldi (%s)' % (n.d['ad'], name))

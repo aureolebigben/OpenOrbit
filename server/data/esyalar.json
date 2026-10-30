@@ -3265,6 +3265,18 @@
     "resource_booty-key-masque",
     5
    ]
+  ],
+  "deal_booty-key-overhaul-march-red": [
+   [
+    "resource_booty-key-red",
+    1
+   ]
+  ],
+  "deal_booty-key-overhaul-march-blue": [
+   [
+    "resource_booty-key-blue",
+    1
+   ]
   ]
  },
  "lazer_cephane": {
@@ -9222,6 +9234,20 @@
     "sablon": "package_event-deal-stellar2022-1",
     "takvim": "apocalypse_booty",
     "_kaynak": "resmî Türk forumu (Obsidyen, Apocalypse, Kırmızı ve Mavi kutu SSS): anahtar paketleri (Küçük 5 … Platin 135); istemcide tek \"deal\" öğesi var: 5 anahtar, anahtar başı 4.200 U (Laurel anahtar paketiyle aynı oran; uyarlama)"
+   },
+   {
+    "lootId": "deal_booty-key-overhaul-march-red",
+    "uridyum": 2500,
+    "sablon": "resource_booty-key",
+    "takvim": "rb_booty",
+    "_kaynak": "Resmî Türk forumu 130230/127496 (Kırmızı ve Mavi Korsan Kutuları): anahtarlar etkinlikte ödemeyle satılır, Assembly'de kırmızı 10 Scrap/5 Aurus/3 Schism, mavi 20/10/5; mavi kutuda şanslar kırmızının iki katı. Tek oyunculu uyarlama: R&B etkinliği sürerken anahtar başına uridyum (kırmızı 2.500 U, mavi 5.000 U; tarifin malzeme oranı); istemcide simgesi olan deal_booty-key-overhaul-march-red/blue öğeleri (\"Red/Blue Booty Key\"; resource_booty-key-red/blue ve deal_booty-key-red/blue beyaz simge, canlı 2026-10-30) yeşil anahtarın şablonuyla, içerik 1 anahtar (oyuncu bildirimi 2026-10-30: etkinlikte mağazada yoktu)"
+   },
+   {
+    "lootId": "deal_booty-key-overhaul-march-blue",
+    "uridyum": 5000,
+    "sablon": "resource_booty-key",
+    "takvim": "rb_booty",
+    "_kaynak": "Resmî Türk forumu 130230/127496 (Kırmızı ve Mavi Korsan Kutuları): anahtarlar etkinlikte ödemeyle satılır, Assembly'de kırmızı 10 Scrap/5 Aurus/3 Schism, mavi 20/10/5; mavi kutuda şanslar kırmızının iki katı. Tek oyunculu uyarlama: R&B etkinliği sürerken anahtar başına uridyum (kırmızı 2.500 U, mavi 5.000 U; tarifin malzeme oranı); istemcide simgesi olan deal_booty-key-overhaul-march-red/blue öğeleri (\"Red/Blue Booty Key\"; resource_booty-key-red/blue ve deal_booty-key-red/blue beyaz simge, canlı 2026-10-30) yeşil anahtarın şablonuyla, içerik 1 anahtar (oyuncu bildirimi 2026-10-30: etkinlikte mağazada yoktu)"
    }
   ],
   "ammunition": [

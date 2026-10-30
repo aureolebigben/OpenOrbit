@@ -1443,7 +1443,12 @@ class Pet:
         w = self.w
         px, py = self.pos(now)
         return any(n.alive and not n.d.get('dost') and (n.engaged or n.id == w.target)
-                   and math.hypot(n.mover.pos(now)[0] - px, n.mover.pos(now)[1] - py) <= kk['menzil'] for n in list(w.npcs.values()))
+                   and math.hypot(n.mover.pos(now)[0] - px, n.mover.pos(now)[1] - py) <= kk['menzil'] for n in list(w.npcs.values()))             or bool(self.assets_in_blast(px, py, kk['menzil']))
+
+    def assets_in_blast(self, px, py, r):
+        """Patlama menzilindeki vurulabilir klan üssü modülleri (cbs.assets_near; oyuncu bildirimi 2026-10-30: kamikaze üslere işlemiyordu)."""
+        near = getattr(self.w.asset_targets, 'assets_near', None)
+        return near(px, py, r) if near else []
 
     def start_map(self):
         """Kamikaze kullanılamayan harita: başlangıç haritaları ve LoW (resmî forum 126411 "Kapıda kamikaze modülü kullanılmayacaktır")."""
@@ -1465,6 +1470,7 @@ class Pet:
         w, kk = self.w, self.gear(KAMIKAZE)
         px, py = self.pos(now)
         hit = [n for n in list(w.npcs.values()) if n.alive and math.hypot(n.mover.pos(now)[0] - px, n.mover.pos(now)[1] - py) <= kk['menzil']]
+        assets = self.assets_in_blast(px, py, kk['menzil'])
         self.ready[KAMIKAZE] = now + kk.get('bekleme_sn', 0)
         with self.p.lock:
             self.d['disli'] = GUARD
@@ -1472,7 +1478,9 @@ class Pet:
         self.destroyed(DESTROYED_KAMIKAZE)
         for n in hit:
             w.hit_npc(n.id, kk['hasar'], 1, attacker=self.pid)
-        self.log('   P.E.T. kamikaze: %d NPC vuruldu' % len(hit))
+        for uid in assets:
+            self.send(w.asset_targets.asset_damage(uid, kk['hasar'], attacker=self.pid))
+        self.log('   P.E.T. kamikaze: %d NPC, %d üs modülü vuruldu' % (len(hit), len(assets)))
 
     def destroyed(self, kind, killer=None):
         with self.p.lock:

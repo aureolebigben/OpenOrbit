@@ -5682,7 +5682,10 @@
      "tur": "etk_hitac_minion",
      "adet": 6,
      "en_cok": 6,
-     "bekleme_sn": 90
+     "bekleme_sn": 300,
+     "hepsi_olunce": true,
+     "koru": {"yaricap": [150, 350], "tasma": 1500},
+     "_bekleme": "Yedekler yardımcıların hepsi yok edilince, 300 sn sonra (uyarlama; fandom Hitac Event: \"There are replacement Minions inside the Mothership\"; oyuncu bildirimi 2026-10-30: 90 sn her çağrıdan sayılıyor, yardımcılar 1-2 dakikada yenileniyordu). koru: yardımcılar ana gemiye bağlı (fandom: \"six Hitac-Minions attached to it\"), ana gemiden 1.500 birim uzaklaşan oyuncuyu bırakır"
     }
    },
    "_kaynak": "wiki: Hitac 2.5 (rota 1-3 > 1-4 > 3-4 > 3-3 > 2-4 > 2-3); fandom 2012: altı yardımcı yaşarken kalkanlı, yenileri ana gemiden çıkar (vurulunca çağırır; bekleme uyarlama)"
@@ -7398,7 +7401,10 @@
      "tur": "etk_hitac2_minion",
      "adet": 6,
      "en_cok": 6,
-     "bekleme_sn": 90
+     "bekleme_sn": 300,
+     "hepsi_olunce": true,
+     "koru": {"yaricap": [150, 350], "tasma": 1500},
+     "_bekleme": "Yedekler yardımcıların hepsi yok edilince, 300 sn sonra (uyarlama; fandom Hitac Event: \"There are replacement Minions inside the Mothership\"; oyuncu bildirimi 2026-10-30: 90 sn her çağrıdan sayılıyor, yardımcılar 1-2 dakikada yenileniyordu). koru: yardımcılar ana gemiye bağlı (fandom: \"six Hitac-Minions attached to it\"), ana gemiden 1.500 birim uzaklaşan oyuncuyu bırakır"
     }
    },
    "_kaynak": "wiki: Hitac 2.0 (rota 4-1 > 4-2 > 4-3); davranış Hitac 2.5 ile aynı (uyarlama)"
@@ -9687,15 +9693,15 @@
    "npc": [
     {
      "tip": "80",
-     "adet": 4
+     "adet": 10
     },
     {
      "tip": "uber_protegit",
-     "adet": 12
+     "adet": 40
     }
    ],
-   "bonus_kutu": 40,
-   "_kaynak": "türler wiki (belgeler/wiki/maps.md); adetler uyarlama (???)",
+   "bonus_kutu": 200,
+   "_kaynak": "türler wiki (belgeler/wiki/maps.md); adetler uyarlama (???): fandom \"vast numbers of Cubikon and Uber Protegit\", \"many Bonus Boxes covering the entire map\", forum 127347 \"bol miktarda bonus\", \"sürekli olarak Cubikon ve refakatçi gemileri Uber Protegitler gelmeye başlar\" (oyuncu bildirimi 2026-10-30: 4 Cubikon, 12 Uber Protegit, 40 kutu seyrek kalıyordu; harita 21.000x13.100'de ekran başına ~2 kutu)",
    "gizlenme_yok": true,
    "_kurallar": "Cubikon Mezarlığı (wiki, belgeler/arastirma/pve_icerik.md 2.38): girişte gizlenme kalkar ve kullanılamaz, yavaşlatan hava (oran uyarlama), her yerde bonus kutusu (ilki 1.000 UCB-100, değeri giderek LCB-10'a düşer); çıkış yalnız atlama CPU'su ya da ölüm. Giriş: atlama CPU'su (esyalar.json mezarlik_sansi) ya da 4-5'teki gizli, yer değiştiren solucan deliği. Onarımlar ücretsiz (fandom Cubikon's Graveyard: \"repairs are free\"): ölüm ekranındaki yerinde onarım da bedelsiz (onarim_ucretsiz; dunya.repair_offers).",
    "onarim_ucretsiz": true,

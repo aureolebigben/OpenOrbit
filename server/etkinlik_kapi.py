@@ -508,7 +508,10 @@ class Kosu(KAPI.Kosu):
         """kapi.Kosu.spawn_one'ın etkinlik kapısı türleriyle (eg_*) olanı: kalıcı patron koruyucuları doğup ölmeden hasar almaz."""
         w, G = self.w, self.k.gate(self.key)
         a = self.wave()['uzaylilar'][i]
-        n = w.spawn_npc_at(npc_type(self.key, self.k.order(self.key)[G['dalga']], i), x, y, dalga=True)
+        # "oyuncu" görünümlü (Compromising Invasion 7. dalga Evil You) oyuncunun gemisiyle: türün modeli "oyuncu" istemcide çizilmiyor,
+        # gemi görünmüyor ve seçilemiyordu, roketleri vuruyordu (oyuncu bildirimi 2026-10-30)
+        model = self.k.p.ship_look() if a['tur'] == 'oyuncu' else None
+        n = w.spawn_npc_at(npc_type(self.key, self.k.order(self.key)[G['dalga']], i), x, y, model=model, dalga=True)
         n.gate, n.hunt = True, True
         self.npcs.add(n.id)
         group.add(n.id)

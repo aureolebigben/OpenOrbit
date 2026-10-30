@@ -258,6 +258,13 @@ class Profil:
                 base[k] = base.get(k, 0) + v
             self.d['cephane'], self.d['cephane_tohum'] = base, True
             self.dirty = True
+        for k in [k for k in self.d.get('cephane', {}) if k.startswith('resource_')]:
+            # Dünya Editörü'nün bonus kutusundaki kaynaklar (ABR …) cephaneye yazılıyordu (oyuncu bildirimi 2026-10-30): depoya
+            n = self.d['cephane'].pop(k)
+            if n > 0:
+                d = self.d.setdefault('diger_esyalar', {})
+                d[k] = d.get(k, 0) + n
+            self.dirty = True
         for k, default in (('secili', {'lazer': 'ammunition_laser_lcb-10', 'roket': 'ammunition_rocket_r-310'}), ('esya_kimlik', {})):
             if k not in self.d:
                 self.d[k] = json.loads(json.dumps(t.get(k) or default))     # kopya: tohum profiller arasında paylaşılmasın

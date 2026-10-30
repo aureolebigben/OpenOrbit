@@ -561,7 +561,9 @@ class Esyalar:
         elif item == S['atlama_cpu']['menu']:
             self.jump_cpu(now)
         elif item == S['gelismis_atlama']['menu']:
-            self.log('   AJP-01: hedef uzay haritasından seçilir')
+            it = self.p.window_item('spacemap')       # hedef uzay haritasının atlama panelinden seçilir: tık haritayı açar
+            if it:
+                self.send([('WindowItemCommand', dict(it, maximized=True))])
         elif item == S['gizlenme_cpu']['menu']:
             self.cloak(now)
         elif item in TOGGLES:
@@ -721,12 +723,16 @@ class Esyalar:
         return True
 
     def mine_effect_msgs(self, now=None, replay=False, remember=True):
-        """Mayının gemideki kalıcı görseli: PLAGUE (57), SL-M01'in slow-effect'i; patlama bunları kendiliğinden başlatmaz."""
+        """Mayının gemideki kalıcı görseli: PLAGUE (57), SL-M01'in slow-effect'i (uzaylıların yavaşlatan atışında da: Saboteur, Uber
+        Protegit …); patlama bunları kendiliğinden başlatmaz."""
         now = time.time() if now is None else now
         w, msgs = self.w, []
         for kind in ('enfeksiyon', 'yavas'):
             effects = [] if w.hero_dead else w.hero_etki.get(kind, now)
             effects = [e for e in effects if kind == 'enfeksiyon' or e.get('kaynak') in MINES]
+            if kind == 'yavas' and not w.hero_dead:
+                effects += [e for e in w.hero_etki.get('yavas', now) + w.hero_etki.get('hiz_siniri', now)
+                            if str(e.get('kaynak')).startswith('yavaslatma_')]
             until = max((e['bitis'] for e in effects), default=0)
             previous = self.mine_visuals.get(kind, 0)
             def message(on):

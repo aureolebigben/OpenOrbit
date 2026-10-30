@@ -8714,7 +8714,7 @@
          "_": "QuestConditionModule",
          "id": 0,
          "matches": [
-          "@own X-4"
+          "@own X-3"
          ],
          "type": 77,
          "displayType": 77,
@@ -8907,7 +8907,7 @@
             "_": "QuestConditionModule",
             "id": 0,
             "matches": [
-             "@own X-4"
+             "@own X-3"
             ],
             "type": 77,
             "displayType": 77,
@@ -16984,6 +16984,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 1,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11601600,
@@ -17056,6 +17057,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 2,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11601700,
@@ -17128,6 +17130,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 3,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11601800,
@@ -17200,6 +17203,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 1,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11601900,
@@ -17272,6 +17276,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 2,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11602000,
@@ -17344,6 +17349,7 @@
    "onceki": [],
    "kaynak": "wiki",
    "pvp": true,
+   "firma_haric": 3,
    "kok": {
     "_": "QuestCaseModule",
     "id": 11602100,

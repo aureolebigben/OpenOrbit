@@ -263,8 +263,43 @@ class Cbs:
         d = h.d.setdefault('cbs', {})
         if not d.get('ortak'):
             self.embed(h, d)
+        if self.p is not h:
+            self.bring(h, d)
         self.migrate_rival_stats(h, d)
         return d['asteroitler']
+
+    def bring(self, h, d):
+        """Ek istemcinin (misafirin) tek oyunculuda kurduğu istasyonlar da ortak olur (embed gibi): boş asteroide yuvadaki modül
+        (sahibiyle, ortak kimlikle), istasyon oyuncunun klanının. Asteroit ortakta doluysa istasyon kurulmaz, modülleri envanterinde
+        kalır. Önce yalnız sunucunun oyuncusununkiler ortaktı: kayıt ek istemcide açılınca kendi istasyonları yoktu (oyuncu bildirimi
+        2026-10-30). Klansızken bekler (klanı bağlanınca)."""
+        own = self.p.d.get('cbs') or {}
+        built = [aid for aid, a in own.get('asteroitler', {}).items()
+                 if a.get('sahip') != 'rakip' and (a.get('yuvalar') or a.get('durum') in ('kurma', 'kurulu'))]
+        k = self.klan() if built else None
+        if not k:
+            return
+        me, name = KL.ad(self.p), self.p.d['pilot'].get('userName', '')
+        with h.lock:
+            shared = d.setdefault('asteroitler', {})
+            for aid in built:
+                a = own['asteroitler'].pop(aid)
+                there = shared.get(aid) or {}
+                if there.get('yuvalar') or there.get('durum', 'bos') != 'bos':
+                    self.log('   CBS: %s ortakta dolu, %s istasyonunun modülleri envantere' % (aid, me))
+                    continue
+                slots = {}
+                for s, y in a.get('yuvalar', {}).items():
+                    m = own.get('moduller', {}).pop(str(y.get('iid')), None)
+                    if m is not None:
+                        d['ortak_sira'] = int(d.get('ortak_sira', 0)) + 1
+                        slots[s] = dict(y, iid=ORTAK_ITEM + d['ortak_sira'], modul=m, sahip=me, sahip_adi=name)
+                a.pop('rakip', None)
+                a.pop('rakip_ilerleme', None)
+                shared[aid] = dict(a, yuvalar=slots, klan=k['id'], surum=there.get('surum', 0) + 1)
+                self.log('   CBS: %s istasyonu ortakta (%s)' % (aid, me))
+            h.dirty = True
+        self.p.dirty = True
 
     def embed(self, h, d):
         """Sunucunun oyuncusunun tek oyunculuda kurduğu istasyonlar ortak olur: yuvadaki modül yuvaya (sahibiyle), istasyon klanının."""
@@ -1607,6 +1642,17 @@ class Cbs:
     def asset_hit(self, uid, dmg):
         return self.asset_damage(uid, dmg, atype=1)
 
+    def assets_near(self, x, y, r):
+        """Bu haritada (x, y)'ye r birimden yakın, vurulabilir modüllerin kimlikleri (P.E.T. kamikazesi: pet.kamikaze)."""
+        out = []
+        for aid in AST:
+            for slot in range(SLOTS):
+                uid = ASSET_BASE + aid * 100 + slot
+                pos = self.asset_pos(uid) if slot != DEFLECTOR else None
+                if pos and math.hypot(pos[0] - x, pos[1] - y) <= r and not self.asset_attackable(uid):
+                    out.append(uid)
+        return out
+
     def asset_damage(self, uid, dmg, atype=0, shield_only=False, hull_only=False, attacker=None):
         denied = self.asset_attackable(uid)
         if denied:
@@ -1637,16 +1683,19 @@ class Cbs:
         return [hit, bar] + msgs
 
     def rival_fire(self, now):
-        """Deflector kapalıyken menzildeki oyuncuya tam modül hasarı (rakip.hasar_carpani varsayılan 1,0).
-        Ölüm ekranında neden BATTLESTATION; lazer/roket kendi saldırı türünü kullanır."""
+        """Kurulu rakip istasyonun silahları menzildeki oyuncuya tam modül hasarı (rakip.hasar_carpani varsayılan 1,0). Deflector
+        yalnız istasyonu dokunulmaz yapar, silahlar yine ateş eder (fandom Clan Battle Stations: kurulumdan sonra "the module will
+        start to attack"); gizlenmiş gemi hedeflenmez (oyuncu bildirimi 2026-10-30: yalnız deflector kapalıyken ve gizlenmeye bakmadan
+        ateş ediyordu). Ölüm ekranında neden BATTLESTATION; lazer/roket kendi saldırı türünü kullanır."""
         w = self.world
         if not w or w.hero_dead or getattr(w, 'jumping', False):
             return []
         hx, hy = w.hero_pos(now)
+        cloaked = w.gizli(now)
         for aid in BY_MAP.get(int(w.map_id), []):
-            if not self.rival_attackable(aid):
-                continue
             a = self.ast(aid)
+            if a.get('sahip') != 'rakip' or a['durum'] != 'kurulu':
+                continue
             for s, y in list(a['yuvalar'].items()):
                 md = MODS[y['loot']]
                 if not md.get('silah') or y['can'] <= 0 or w.hero_dead:
@@ -1657,7 +1706,7 @@ class Cbs:
                     continue
                 candidates = []
                 distance = math.hypot(sx - hx, sy - hy)
-                if distance <= md['menzil']:
+                if distance <= md['menzil'] and not cloaked:
                     candidates.append((distance, 0, w.hid, None))
                 pet = getattr(w, 'pet', None)
                 if pet and pet.active and pet.alive and pet.w is w:

@@ -202,6 +202,25 @@ def bilgi_page(kind):
             'font-family:Verdana;padding:24px"><h2>%s</h2><p>%s</p></body></html>' % (title, title, text))
 
 
+_tarayici = {}                          # ek oturum -> tarayıcının internalWebGL'e geldiği an (login.php'si henüz gelmedi)
+TARAYICI_SN = 10
+
+
+def istek_oturumu(h, giris=False):
+    """login.php ve setLang.php'nin oturumu: PHPSESSID çerezi. İstemci çerezi gömülü tarayıcının deposundan okuyor; istemciler aynı
+    tarayıcı klasörünü paylaştığından (Vuplex chromium-cache) ek istemcide okuma ara sıra boş dönüyor, tarayıcının kendi isteği çerezi
+    taşısa da: ek istemci ana oyuncu olarak giriyordu (canlı test 2026-10-30). Çerez boşsa son TARAYICI_SN içinde internalWebGL'e gelip
+    henüz giriş yapmamış ek oturum (giris: login.php, eşleşen kayıt düşer)."""
+    sid, now = cerez(h, 'PHPSESSID'), time.time()
+    with lock:
+        if not sid:
+            fresh = [(t, s) for s, t in _tarayici.items() if now - t < TARAYICI_SN]
+            sid = max(fresh)[1] if fresh else sid
+        if giris and sid:
+            _tarayici.pop(sid, None)
+    return sid
+
+
 def login(sid=None):
     """sid: isteğin PHPSESSID çerezi (ek istemcinin oturumu ya da ana oyuncununki)."""
     o = oturum(sid)
@@ -289,8 +308,8 @@ ROUTES = {
     '//unityApi/events/ssRewards.php': lambda h: ('text/xml;charset=UTF-8', galaxy_trek_xml('odul')),
     '/unityApi/guide/ggRewards.php': lambda h: ('text/xml;charset=UTF-8', gate_rewards_xml()),
     '/unityApi/links.php': lambda h: ('application/json', json.dumps(links())),
-    '/unityApi/login.php': lambda h: ('application/json', json.dumps(login(cerez(h, 'PHPSESSID')))),
-    '/unityApi/setLang.php': lambda h: set_lang(h.body, cerez(h, 'PHPSESSID')),
+    '/unityApi/login.php': lambda h: ('application/json', json.dumps(login(istek_oturumu(h, giris=True)))),
+    '/unityApi/setLang.php': lambda h: set_lang(h.body, istek_oturumu(h)),
     '/unityApi/agent.php': lambda h: ('text/plain', ''),          # istemcinin olay izleme bildirimi (ör. Unity_ChangeLanguagetr)
 }
 
@@ -375,6 +394,9 @@ class H(BaseHTTPRequestHandler):
             ctype, out = 'text/html; charset=utf-8', bilgi_page(base[len('/bilgi/'):])
         elif 'indexInternal.es' in path:
             o = oturum(cerez(self, 'dosid'))
+            if o and o[0] != SESSION:
+                with lock:
+                    _tarayici[o[0]] = time.time()
             ctype, out = 'text/plain', o[0] if o else 'gecersiz'
         elif cdn_file(base):
             ctype, out = cdn_file(base)

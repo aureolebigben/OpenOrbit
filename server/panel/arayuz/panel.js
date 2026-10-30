@@ -2407,7 +2407,7 @@ const SK_METIN = {
   skylab_message_upgrade_terbium: N('Skylab deposunda yeterli Terbium yok.'), skylab_history_module_activate_notBuiltYet: N('Modül henüz kurulmadı.'),
   skylab_history_module_deactivated: N('Modül kapatıldı.'), skylab_history_module_activated: N('Modül açıldı.'),
   skylab_history_module_activate_lowpower: N('Güneş modülünün enerjisi yetmiyor.'), skylab_history_module_upgrade_lowpower: N('Güneş modülünün enerjisi yetmiyor.'),
-  skylab_message_upgrade_success: N('Yükseltme başladı.'), skylab_message_upgrade_inProgress: N('Başka bir yükseltme sürüyor.'),
+  skylab_message_upgrade_success: N('Yükseltme başladı.'), skylab_message_upgrade_inProgress: N('Bu modülün yükseltmesi zaten sürüyor.'),
   skylab_history_upgrade_canceled: N('Yükseltme iptal edildi.'), skylab_message_upgrade_uridium: N('Yeterli uridyumun yok.'),
   skylab_history_upgrade_instant: N('Modül yükseltildi.'), skylab_history_upgrade_finished: N('Yükseltme bitti.'),
   skylab_message_transport_notEnoughUridium: N('Yeterli uridyumun yok.'), skylab_message_transport_alreadyActive: N('Bir taşıma zaten sürüyor.'),

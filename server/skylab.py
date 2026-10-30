@@ -347,14 +347,11 @@ class Skylab:
         u = AY.fiyat('hizmet_fiyat', c['uridyum'], 'skylab')
         return max(1 if u else 0, int(math.ceil(u * (m['yukseltme'] - now) / max(1, AY.sure(c['sure_sn'], 'skylab')))))
 
-    def busy(self):
-        return next((k for k, m in self.st['moduller'].items() if m.get('yukseltme')), None)
-
     def check_upgrade(self, key):
         """Yükseltilebilir mi -> hata kodu ya da None."""
         if key not in MODULES or not MODULES[key]['grup'] or self.level(key) >= MODULES[key]['azami']:
             return 30
-        if self.busy():
+        if self.module(key).get('yukseltme'):        # aynı anda birden çok modül yükseltilebilir (oyuncu bildirimi 2026-10-30); aynı modül bir kez
             return 42
         if key != 'BASE_MODULE' and self.level(key) + 1 > self.level('BASE_MODULE'):
             return 31

@@ -1582,7 +1582,7 @@
 "Etkin gemi değişti.": "Vaisseau actif changé.",
 "Ana modül": "Module de base",
 "Anında ({0} U.)": "Instantané ({0} U.)",
-"Başka bir yükseltme sürüyor.": "Une autre amélioration est en cours.",
+"Bu modülün yükseltmesi zaten sürüyor.": "Ce module est déjà en cours d'amélioration.",
 "Bir taşıma zaten sürüyor.": "Un transport est déjà en cours.",
 "Bitir ({0} U.)": "Terminer ({0} U.)",
 "Cevherler gemiye ulaştı.": "Les minerais sont arrivés sur ton vaisseau.",

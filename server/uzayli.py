@@ -153,7 +153,11 @@ class Yetenekler:
             self.emp(n, now)
         k = n.davranis.get('kaybolma')
         if k and dmg > 0 and n.alive and n.hp > 0:
-            n.ab['kayip'] = n.ab.get('kayip', 0) + dmg
+            # yalnız gövdenin kaybı (darkorbitwiki: "after losing ~1.280.000 HP"); kalkan hasarı da sayılıyordu, 6,8 M kalkanlı patron
+            # neredeyse tam canda kayboluyordu (oyuncu bildirimi 2026-10-30). Gizliyken dolan can sayılmaz
+            prev = n.ab.get('son_can', n.d['hp'])
+            n.ab['son_can'] = n.hp
+            n.ab['kayip'] = n.ab.get('kayip', 0) + max(0, prev - n.hp)
             if n.ab['kayip'] >= k['hasar']:
                 n.ab['kayip'] = 0
                 self.vanish(n, k, now)
@@ -214,7 +218,11 @@ class Yetenekler:
     def vanish(self, n, k, now):
         """Emperor Lordakium: uzağa ışınlanır, iki sahtesi başka yerlerde belirir; oyuncunun seçimi bırakılır."""
         w = self.w
-        x, y = self.far_spot(None, k.get('uzaklik', 2500))
+        # gerçeği ve sahteleri oyuncunun görüşü içinde, ayrı yönlerde (wiki: "reappears together with two fake Lordakiums"; görüşün
+        # dışına, 2.500 birim öteye gidiyorlardı, haritada görünmüyor, bulunamıyordu: oyuncu bildirimi 2026-10-30)
+        hx, hy = w.hero_pos(now)
+        spots = self.ring_spots(hx, hy, k.get('uzaklik', 1500), k.get('sahte', 2) + 1)
+        x, y = spots.pop(0)
         n.mover = self.Mover(x, y)
         n.engaged = False
         n.next_think = now + 2
@@ -228,12 +236,19 @@ class Yetenekler:
             msgs.append(('ShipRemoveCommand', {'userId': n.id}))
         w.send(msgs)
         fake = self.fake_type(n, k)
-        for _ in range(k.get('sahte', 2)):
-            fx, fy = self.far_spot(None, k.get('uzaklik', 2500))
+        for fx, fy in spots:
             f = w.spawn_npc_at(fake, fx, fy)
             f.summoned, f.gate = True, n.gate
             f.ab['omur'] = now + k.get('sahte_omur_sn', 90)
         w.log('   %s kayboldu: (%d,%d), %d sahte' % (n.d['ad'], x, y, k.get('sahte', 2)))
+
+    def ring_spots(self, hx, hy, r, count):
+        """Oyuncunun çevresinde r uzaklıkta, eşit açılarla (rastgele sırayla) count nokta; harita içinde."""
+        w, a0 = self.w, random.uniform(0, 2 * math.pi)
+        out = [(int(min(max(hx + math.cos(a0 + 2 * math.pi * i / count) * r, 500), w.map_w - 500)),
+                int(min(max(hy + math.sin(a0 + 2 * math.pi * i / count) * r, 500), w.map_h - 500))) for i in range(count)]
+        random.shuffle(out)
+        return out
 
     def fake_type(self, n, k):
         """Sahte Emperor türü (görünüşü gerçeğinin aynısı; 1 can, ateş etmez, ödülsüz, vurulunca patlar)."""

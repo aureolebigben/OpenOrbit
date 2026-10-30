@@ -12,8 +12,8 @@
       kill      range N | viewport | target | unselected | almost | me     uzaylıları öldür (ödülleriyle), canı 1'e indir, kendini
       quest     accept|finish|fail|cancel <id>, finishAll
       book      item {amount, level, overheatPetGear} | package {amount}     eşya ya da paket ver
-      spawn     npcType {amount}             uzaylı doğur (istemcinin gönderdiği npcId ya da gemi türü)
-      box       spawn {boxType, amount}      kutu bırak
+      spawn     npcType {amount}             uzaylı doğur (istemcinin game.xml npcId'si: spawn_type)
+      box       spawn {boxType, amount}      kutu bırak; collect {boxType, amount}: en yakın kutuları topla
       god       aç/kapa dokunulmazlık
       cooldown  resetAll                     yetenek ve eşya beklemeleri sıfır
       pet       petLevel/lv                  P.E.T. seviyesi
@@ -24,13 +24,16 @@
   - Konsolun Ship Check, Switch Ship, Effects (efekt ve VisualModifier oynatma), Show Assets sayfaları sunucusuz.
 Panelin "GM konsolu" ayarı (gm_konsol, geliştirici) açıkken dailyRank 6000 gider (rütbe simgesi boş görünebilir) ve komutlar çalışır.
 """
-import math, random, time
+import json, math, os, random, time
 
 import ayar as AY
 from eski_protokol import legacy
 
 REQUESTS = ('CCInitRequest', 'CCommandRequest')
 ADMIN_RANK = 6000
+GM_NPC = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data', 'gm_npc.json'), encoding='utf8'))['npc']
+DERIVED = ('gg_', 'etk_', 'pm_', 'apo_', 'deney_')      # kapı, etkinlik, mod kopyaları: aynı npc_kimlik'te asıl tür önce
+STAND_IN = '79'                                          # sunucuda karşılığı olmayan NPC'nin değerleri (Kristallon)
 
 
 def enabled(profil=None):
@@ -74,6 +77,36 @@ def num(v, default=0):
         return int(v)
     except (TypeError, ValueError):
         return default
+
+
+def dunya_types():
+    import dunya
+    return dunya.CFG['tipler']
+
+
+def _plain(s):
+    return ''.join(c for c in str(s or '').lower() if c.isalnum())
+
+
+def spawn_type(want):
+    """Spawn sayfasının npcId'si -> (tür, model, ad). İstemci game.xml'deki npcId'yi gönderir (data/gm_npc.json); tür anahtarları
+    (Battleray '115') başka NPC'lerin kimlikleriyle çakıştığı için önce npc_kimlik (oyuncu bildirimi 2026-10-30: Emperor Kristallon
+    115 -> Battleray, Ufo 25 -> Boss Saimon). Sunucuda kimliği olmayan: gemi türü bir tür anahtarıysa o, adı bir türünkiyle aynıysa o,
+    yoksa yedek türün değerleriyle istemcinin modeli ve adı (model, ad dolu)."""
+    T = dunya_types()
+    same = [k for k, v in T.items() if str(v.get('npc_kimlik')) == want and not k.startswith(('eg_', 'kp_'))]
+    if same:
+        return min(same, key=lambda k: (not k.isdigit(), k.startswith(DERIVED))), None, None
+    tur, name = GM_NPC.get(want) or (None, None)
+    if not name:
+        return (want, None, None) if want in T else (None, None, None)
+    alike = next((k for k, v in T.items() if _plain(v.get('ad')) == _plain(name) and not k.startswith(('eg_', 'kp_'))), None)
+    if alike:
+        return alike, None, None
+    name = name if name.startswith(('-=', '..', '(', '\\', '<')) else '-=[ %s ]=-' % name
+    if tur in T:                            # aynı modelin başka adlı tasarımı (Boss Kucurbium: UberLordakium'un modeli)
+        return tur, None, name
+    return STAND_IN, tur, name
 
 
 class Konsol:
@@ -120,7 +153,8 @@ class Konsol:
         attr = lambda name, rng=None, sub=(): mod('CCAttributeModule', name=name, subAttributes=list(sub), singleAttributeSelection=True,
                                                    range=rng or mod('CCAbstractRangeModule'), toolTip='')
         box = mod('CCommandModule', name='box', toolTip='', singleAttributeSelection=True,
-                  args=[attr('spawn', sub=[attr('boxType', box_list), attr('amount', mod('CCNumericRangeModule', min=1, max=100))])])
+                  args=[attr(a, sub=[attr('boxType', box_list), attr('amount', mod('CCNumericRangeModule', min=1, max=100))])
+                        for a in ('spawn', 'collect')])
         quest = mod('CCommandModule', name='quest', toolTip='', singleAttributeSelection=True,
                     args=[attr('accept', quest_list), attr('finish', quest_list), attr('fail', quest_list), attr('finishAll')])
         return 'CCInitCommand', {'commands': [box, quest]}
@@ -227,24 +261,22 @@ class Konsol:
         return msgs + m.money_msgs() + self.say('%s x%d' % (loot, n))
 
     def cmd_spawn(self, rows, d):
-        import dunya
         w = self.w
         if not w:
             return []
         want = str(d.get('npcType') or '')
-        T = dunya.CFG['tipler']
-        tip = want if want in T else next((k for k, v in T.items() if str(v.get('npc_kimlik')) == want and not k.startswith(('eg_', 'kp_'))),
-                                          None)
+        tip, model, name = spawn_type(want)
         if not tip:
             return self.say('uzaylı türü yok: %s' % want)
         n = max(1, min(50, num(d.get('amount'), 1)))
+        prep = (lambda x: setattr(x, 'd', dict(x.d, ad=name))) if name else None
         now = time.time()
         with w.lock:
             hx, hy = w.hero_pos(now)
             for k in range(n):
                 a = 2 * math.pi * k / n
-                w.spawn_npc_at(tip, hx + math.cos(a) * 600, hy + math.sin(a) * 600)
-        return self.say('%s x%d' % (T[tip]['ad'], n))
+                w.spawn_npc_at(tip, hx + math.cos(a) * 600, hy + math.sin(a) * 600, model=model, prep=prep)
+        return self.say('%s x%d' % (name or dunya_types()[tip]['ad'], n))
 
     def cmd_box(self, rows, d):
         import dunya
@@ -253,6 +285,14 @@ class Konsol:
             return []
         kind, n = d.get('boxType') or 'BONUS_BOX', max(1, min(50, num(d.get('amount'), 1)))
         now = time.time()
+        if any(name == 'collect' for name, _, _ in rows):
+            # Collect düğmesi (istemci GmComponentSystem.SendCollectBox: 'collect' {boxType, amount}): en yakın kutuları toplar
+            # (oyuncu bildirimi 2026-10-30: Spawn gibi kutu bırakıyordu)
+            with w.lock:
+                hx, hy = w.hero_pos(now)
+                near = sorted((math.hypot(b['x'] - hx, b['y'] - hy), h) for h, b in w.boxes.items() if b['tip'] == kind and w.benim(b))
+                got = sum(1 for _, h in near[:n] if w.take_box(h) is not False)
+            return self.say('%s toplandı: %d' % (kind, got))
         with w.lock:
             hx, hy = w.hero_pos(now)
             for k in range(n):
