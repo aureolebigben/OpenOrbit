@@ -532,7 +532,7 @@ class Magaza:
 
     def upgrade(self, f):
         """LabUpdateItemRequest {itemToUpdate, updateWith {oreType, count}}: cevher parçaya yüklenir, her cevher LAB['birim']: lazer/
-        roket 10 tur/adet, motor/kalkan 1 dakika (en çok LAB['azami']; artan cevher kargoda kalır). Aynı cevher eklenir, başka cevher
+        roket 10 tur/adet, motor/kalkan 10 dakika (en çok LAB['azami']; artan cevher kargoda kalır). Aynı cevher eklenir, başka cevher
         öncekini siler (istemci: lab_alert).
         Hız ve kalkan hemen değişir."""
         item = (f.get('itemToUpdate') or {}).get('itemValue')
