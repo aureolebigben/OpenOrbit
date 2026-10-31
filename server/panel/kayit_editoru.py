@@ -359,7 +359,7 @@ def gorunum(pr, m, asil=None):
     lv = pl.get('level', 1)
     sonraki = next((need for l, need in lv_tab if l == lv + 1), None)
     taban = next((need for l, need in lv_tab if l == lv), 0)
-    takili = p.hangar_map()
+    yerler = p.item_places()
     yukseltme_azami = {}
 
     def azami(l):
@@ -400,11 +400,15 @@ def gorunum(pr, m, asil=None):
         return h + (['pet'] if PETM.slot_for(l) else [])
     envanter = []
     for i, l in p.d['esyalar'].items():
-        if int(i) in takili or l.startswith(('drone_', 'ship_')):
+        if l.startswith(('drone_', 'ship_')):
+            continue
+        yer = yerler.get(int(i))                       # equipped items stay listed with their ship and configs (other config can use them)
+        if yer and not hedefler(l):
             continue
         e = _esya(p, i)
         e.update(hedefler=hedefler(l), yuva=MG.slot_of(l) or PETM.slot_for(l) or ('tasarim' if l in MG.DESIGNS else 'diger'),
-                 pet_yuva=PETM.slot_for(l), heat=bool(PETM.heat_slot_ok(l)), azami=azami(l))
+                 pet_yuva=PETM.slot_for(l), heat=bool(PETM.heat_slot_ok(l)), azami=azami(l),
+                 gemi=yer[0] if yer else None, konfigler=sorted(yer[1]) if yer else [])
         envanter.append(e)
     for g in gemiler:                                  # takılı eşyaların yükseltme sınırı (seviye penceresi)
         for c in list(g['konfigler'].values()) + [d for per in g['dronlar'].values() for d in per.values()] + list((g['pet'] or {}).values()):

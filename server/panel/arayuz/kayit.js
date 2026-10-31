@@ -291,7 +291,7 @@ function keKimlik(v) {
 }
 
 function keMenu(v) {
-  const n = { hangar: v.gemiler.length, dronlar: v.dronlar.length, envanter: v.envanter.length, boosterlar: v.boosterlar.length,
+  const n = { hangar: v.gemiler.length, dronlar: v.dronlar.length, envanter: v.envanter.filter(e => !keTakili(e)).length, boosterlar: v.boosterlar.length,
     kaynaklar: v.kaynaklar.length + v.cevherler.filter(c => c[2]).length, cephane: v.cephane.filter(c => c[1]).length };
   return h('nav', { class: 'card ke-menu' }, KE_SEKMELER.map(s => h('button', { class: s[0] === KE.sekme ? 'on' : '', type: 'button',
     onclick: () => { if (KE.sekme !== s[0]) { KE.sekme = s[0]; $('#content').scrollTop = 0; keCiz(); } } },
@@ -458,6 +458,9 @@ function keDuzenle(e) {
 }
 
 // envanteri gruplar: aynı lootId ve seviyedekiler tek kutuda (adet); rastgele nitelikliler (modül, top, QFC) tek tek
+// item equipped somewhere (its ship and configs); the game lets another config of the same ship use it too
+const keTakili = e => !!(e.konfigler && e.konfigler.length);
+const keKullanilir = e => !keTakili(e) || (e.gemi === KE.gemi && !e.konfigler.includes(String(KE.konfig)));
 function gruplaEsya(liste) {
   const gr = {};
   for (const e of liste) { const k = [e.lootId, e.yukseltme || 0, e.seviye || 0, e.rng ? e.id : ''].join('|'); (gr[k] = gr[k] || []).push(e); }
@@ -466,9 +469,10 @@ function gruplaEsya(liste) {
 // boş yuvaya tak: envanterde uyanlar ya da katalogdan ver ve tak
 function keTakSec(hd) {
   const v = KE.v;
-  const uygun = v.envanter.filter(e => hd.hedef === 'ship' ? e.hedefler.includes('ship') && e.yuva === hd.yuva
+  const uygun = v.envanter.filter(e => keKullanilir(e) && (hd.hedef === 'ship' ? e.hedefler.includes('ship') && e.yuva === hd.yuva
     : hd.hedef === 'drone' ? e.hedefler.includes('drone') && (hd.yuva === 'tasarim') === (e.yuva === 'tasarim')
-      : e.hedefler.includes('pet') && (hd.yuva === 'heat' ? e.heat : e.pet_yuva === hd.yuva));
+      : e.hedefler.includes('pet') && (hd.yuva === 'heat' ? e.heat : e.pet_yuva === hd.yuva)))
+    .sort((a, b) => keTakili(b) - keTakili(a));          // items of the other config first: free copies stay free
   const baslik = hd.hedef === 'drone' ? (hd.yuva === 'tasarim' ? T('Dron tasarımı') : T('Dron donanımı')) : yuvaAdi(hd.yuva);
   const m = modal({ title: T('{0}: eşya tak', baslik), wide: true, body: [
     uygun.length ? h('div', { class: 'ke-secim' }, gruplaEsya(uygun).map(gr => keEsyaDugme({ class: 'ke-secim-esya', type: 'button',
@@ -681,10 +685,11 @@ function kePet(v) {
 
 function keEnvanter(v) {
   const g = keGemi(v), ro = v.salt_okunur;
-  const turler = [...new Set(v.envanter.map(e => e.yuva))];
+  const bos = v.envanter.filter(e => !keTakili(e));          // inventory tab: only items equipped nowhere (delete, edit)
+  const turler = [...new Set(bos.map(e => e.yuva))];
   if (KE.envTur !== 'hepsi' && !turler.includes(KE.envTur)) KE.envTur = 'hepsi';
   const q = KE.ara.toLowerCase();
-  const liste = v.envanter.filter(e => (KE.envTur === 'hepsi' || e.yuva === KE.envTur) && (!q || esyaAdi(e.lootId).toLowerCase().includes(q) || e.lootId.includes(q)));
+  const liste = bos.filter(e => (KE.envTur === 'hepsi' || e.yuva === KE.envTur) && (!q || esyaAdi(e.lootId).toLowerCase().includes(q) || e.lootId.includes(q)));
   const izgara = h('div', { class: 'ke-env' }, gruplaEsya(liste).map(gr => {
     const e = gr[0];
     return keEsyaDugme({ class: 'ke-env-esya', type: 'button', onclick: ev => !ro && popMenu(ev.currentTarget, [
@@ -702,7 +707,7 @@ function keEnvanter(v) {
       h('span', { class: 'spacer' }), ro ? null : btn(T('Eşya ekle'), () => keKatalog({}), 'primary sm', 'plus')),
     turler.length > 1 ? h('div', { class: 'seg', style: { marginTop: '12px', flexWrap: 'wrap' } }, ['hepsi', ...turler].map(t => h('button', { class: t === KE.envTur ? 'on info' : '',
       onclick: () => { KE.envTur = t; keCiz(); } }, t === 'hepsi' ? T('Hepsi') : t === 'tasarim' ? T('Dron tasarımları') : yuvaAdi(t)))) : null),
-    liste.length ? h('div', { class: 'card ke-k' }, izgara) : h('div', { class: 'card empty' }, icon('box'), h('div', null, v.envanter.length ? T('Aramaya uyan eşya yok.') : T('Envanter boş: bütün eşyalar takılı.'))));
+    liste.length ? h('div', { class: 'card ke-k' }, izgara) : h('div', { class: 'card empty' }, icon('box'), h('div', null, bos.length ? T('Aramaya uyan eşya yok.') : T('Envanter boş: bütün eşyalar takılı.'))));
 }
 
 function keCephane(v) {

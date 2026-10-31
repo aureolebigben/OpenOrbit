@@ -2334,12 +2334,16 @@ async function renderHangar() {
 // envanter kartı: takma kipinde seçili bölüme takılabilenler, satış kipinde satılabilenler (aynı eşyalar tek kutuda, sayısıyla)
 function hangarEnvanter(v, kilit, ikon, svRozet) {
   const sat = HG.kip === 'sat' && HG.bolum !== 'cpu';
-  const uygun = v.envanter.filter(e => sat ? e.satis : HG.bolum !== 'cpu' && e.hedefler.includes(HG.bolum));
+  // items equipped in another config of this ship can be equipped here too (as in game); they are never sold
+  const baska = e => e.konfigler && e.konfigler.length > 0;
+  const uygun = v.envanter.filter(e => sat ? e.satis && !baska(e)
+    : HG.bolum !== 'cpu' && e.hedefler.includes(HG.bolum) && !(e.konfigler || []).includes(String(HG.konfig)));
   const turler = [...new Set(uygun.map(e => e.yuva))], anahtar = sat ? 'sat' : HG.bolum;
   if (!turler.includes(HG.yuva[anahtar])) HG.yuva[anahtar] = turler[0];
   const grup = {};
   for (const e of uygun.filter(e => e.yuva === HG.yuva[anahtar])) (grup[e.lootId] = grup[e.lootId] || []).push(e);
-  for (const id of Object.keys(HG.secili)) if (!v.envanter.find(e => String(e.id) === id && e.satis)) delete HG.secili[id];
+  for (const es of Object.values(grup)) es.sort((a, b) => baska(b) - baska(a));      // items of the other config first: free copies stay free
+  for (const id of Object.keys(HG.secili)) if (!v.envanter.find(e => String(e.id) === id && e.satis && !baska(e))) delete HG.secili[id];
   const secilen = v.envanter.filter(e => HG.secili[e.id]), toplam = {};
   for (const e of secilen) toplam[e.satis[0]] = (toplam[e.satis[0]] || 0) + e.satis[1];
   const kutular = Object.entries(grup).sort((a, b) => esyaAdi(a[0]).localeCompare(esyaAdi(b[0]))).map(([lid, es]) => {
