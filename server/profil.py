@@ -641,19 +641,20 @@ class Profil:
     def ammo(self, loot_id):
         return self.d['cephane'].get(loot_id, 0)
 
-    def use_ammo(self, loot_id, n=1):
-        """n adet harca; yetmezse None."""
+    def use_ammo(self, loot_id, n=1, event=True):
+        """n adet harca; yetmezse None. event=False: 'ammo' olayı yayılmaz (envanter.spend ödemesi kendi 'spend' olayını yayar)."""
         with self.lock:
             have = self.d['cephane'].get(loot_id, 0)
             if have < n:
                 return None
             import ayar as AY
-            if AY.get('sonsuz_cephane'):              # panel: sonsuz cephane (harcanmaz)
-                n = 0
-            self.d['cephane'][loot_id] = have - n
+            used = 0 if AY.get('sonsuz_cephane') else n     # panel: sonsuz cephane (harcanmaz)
+            self.d['cephane'][loot_id] = have - used
             self.dirty = True
-        self.ach('ammo', loot=loot_id, adet=n)              # Pass görevleri: cephane harca (gorev_takip.py)
-        return have - n
+        if event:
+            # Quests/Pass count what would have been used, even with infinite ammo
+            self.ach('ammo', loot=loot_id, adet=n)          # Pass görevleri: cephane harca (gorev_takip.py)
+        return have - used
 
     def item_id(self, loot_id):
         """InventoryItemModule.itemId: kayıttaki kimlik, yoksa lootId'den türetilen kararlı sayı."""

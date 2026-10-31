@@ -187,6 +187,7 @@ class Teknoloji:
             return False
         if not AY.get('sonsuz_teknoloji'):          # panel: infinite tech (not used up; at least one still needed)
             add(p, item, -1)
+        p.ach('spend', loot=item, adet=1)           # Quests/Pass "use an item": counted with or without infinite tech
         sec, cd = c.get('sure_sn', 0), c.get('bekleme_sn', 0) * AY.carpan('yetenek_bekleme', 'teknoloji')      # panel
         with p.lock:
             state(p)[item] = dict(bitis=now + sec, hazir=now + sec + cd, sure_ms=int(sec * 1000), bekleme_ms=int(cd * 1000))
