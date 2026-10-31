@@ -24,6 +24,11 @@ def stok(bot):
     return bot.k.setdefault('stok', dict(BASLANGIC))
 
 
+def lazer_var(bot):
+    """Lazer cephanesi var mı (yoksa uzaylıya da oyuncuya da ateş edemez; SAB-50 gövdeye vurmaz)."""
+    return lazer_sec(bot) is not None
+
+
 def carpan(loot):
     return K.ESYA['lazer_cephane'].get(loot, {}).get('carpan', 1)
 

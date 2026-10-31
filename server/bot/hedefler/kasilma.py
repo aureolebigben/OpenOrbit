@@ -15,6 +15,9 @@ class Kasilma(Hedef):
     def puan(self, bot, b):
         o = bot.ozellik
         p = 0.35 + 0.35 * o['hirs'] + 0.25 * o['sabir'] + (0.2 if bot.arketip == 'kasici' else 0)
+        from .. import silah as SL
+        if not SL.lazer_var(bot):
+            p *= 0.3                                      # cephanesiz: yalnız bonus kutusu toplayabilir (önce kargo satar, dinlenir)
         return p * (1 - 0.5 * bot.ruh['yorgunluk']) * (1 - 0.3 * bot.ruh['sikilma'])
 
     def basla(self, bot, b):

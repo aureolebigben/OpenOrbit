@@ -77,14 +77,31 @@ def guncelle(bot):
                       enumerate((l, n) for l, n in k['ekip'].get('dron', {}).items() for _ in range(n))]
 
 
+def npc_rutbe_puani(tip):
+    """Uzaylının rütbe puanı (rutbe.json npc_puan, npc_kimlik ile; oyuncunun rutbe.npc_points'i gibi)."""
+    import rutbe as RT
+    kimlik = K.NPC['tipler'].get(tip, {}).get('npc_kimlik')
+    return RT.R['npc_puan'].get(str(kimlik), {}).get('puan', 0)
+
+
+def gemi_rutbe_puani(gemi):
+    """Yok edilen oyuncu gemisinin rütbe puanı (rutbe.json gemi_puan; Goliath 20, Phoenix 1)."""
+    import rutbe as RT
+    return RT.R['gemi_puan'].get(gemi, {}).get('puan', 0)
+
+
 def puan(bot):
-    """Rütbe puanı (rutbe.json formülü, kabaca: EP, onur, seviye, öldürmeler, görevler, gemi)."""
+    """Rütbe puanı, oyuncununkiyle (rutbe.breakdown) aynı wiki formülü: EP/100.000 + onur/100 + oyuncu gemisi puanları x3 + seviye
+    x100 + kayıttan beri gün x6 + gemi türü x1.000 + uzaylı puanları /2 + görev x100 - ölüm x4 (oyuncu bildirimi 2026-10-31: uzun süre
+    oynayan botlar düşük rütbede kalıyordu; uzaylı ve oyuncu öldürmeleri tür puanı yerine adetle, gemi türü yerine gemi puanıyla, gün ve
+    ölüm hiç sayılmıyordu)."""
     import rutbe as RT
     F = RT.R['formul']
-    k = bot.k
-    return k['ep'] * F['ep'] + k['onur'] * F['onur'] + k['seviye'] * F['seviye'] + k['istat'].get('npc', 0) * F['npc'] \
-        + k['istat'].get('oyuncu', 0) * F['oyuncu'] + k['istat'].get('gorev', 0) * F['gorev'] \
-        + RT.R.get('gemi_puan', {}).get(k['ekip']['gemi'], {}).get('puan', 0) * F['gemi']
+    k, i = bot.k, bot.k['istat']
+    gun = (bot.saat() - k['kayit_t']) // 86400 if k.get('kayit_t') else i.get('sure_sn', 0) // 86400   # eski kayıt: oynadığı süre
+    return k['ep'] * F['ep'] + k['onur'] * F['onur'] + k['seviye'] * F['seviye'] + i.get('npc_puan', 0) * F['npc'] \
+        + i.get('oyuncu_puan', 0) * F['oyuncu'] + i.get('gorev', 0) * F['gorev'] + max(0, gun) * F['gun'] \
+        + RT.R['gemi_turu'].get(k['ekip']['gemi'], 0) * F['gemi'] + i.get('olum', 0) * F['olum_dusman']
 
 
 def rutbe(bot):

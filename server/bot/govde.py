@@ -32,6 +32,7 @@ LAZER_MENZIL = DN.SAVAS['lazer_menzil']
 SAVAS_SN = 8.0                                 # son hasardan bu kadar sonra yenilenir
 YENILENME = 0.02                               # savaş dışında saniyede azami can+kalkanın payı
 ATLAMA_SN = H.JUMP_DELAY_SN
+GELIS_SN = 10.0                 # atlayan bot bu süre içinde gövdelenirse varış portalında doğar (sonra uçup gitmiştir)
 SAVAS_ARALIK = DN.SAVAS['lazer_aralik_sn']
 
 
@@ -207,8 +208,10 @@ def kapi_tick(w, now, y):
 def dogus_yeri(w, b):
     gelis = getattr(b, 'gelis', None)
     b.gelis = None
-    if gelis is not None:
-        gx, gy = H.arrival(gelis, int(w.map_id), b.firma)
+    # portalda yalnız az önce atlayan doğar: oyuncu yokken atlayıp soyut kalanlar oyuncu gelince hep birlikte portaldan çıkıyordu
+    # (oyuncu bildirimi: 2-1'de portalda bekleyip 2-2'ye geçince 10-20 bot oyuncuyla aynı anda portaldan çıktı)
+    if gelis is not None and time.time() - gelis[1] < GELIS_SN:
+        gx, gy = H.arrival(gelis[0], int(w.map_id), b.firma)
         a, r = random.uniform(0, 2 * math.pi), random.uniform(80, 280)      # portalın çevresinde dağınık (üst üste değil)
         return int(gx + math.cos(a) * r), int(gy + math.sin(a) * r)
     x, y = b.k.get('x') or 0, b.k.get('y') or 0
@@ -418,6 +421,7 @@ def oyuncu_oldu(w, n):
     hiz = y.hiz(b) if y is not None else 1.0
     b.odul(None, hiz, ep=oo['ep_puan'], onur=oo['onur_puan'])
     b.ist('oyuncu')
+    b.ist('oyuncu_puan', T.gemi_rutbe_puani(w.p.ship()['lootId']))
     b.hafiza.olay(ad, 'oldurdum')
     b.ruh.it(moral=0.12, ozguven=0.1, ofke=-0.3)
     b.olay('oyuncu_oldurdum', ad=ad)
@@ -765,6 +769,7 @@ def npc_odulu(b, m, pay=1):
     b.odul('npc', hiz, ep=o.get('ep', 0) * x1, kredi=o.get('kredi', 0) * x1, uridyum=o.get('uridyum', 0) * x1,
            onur=o.get('onur', 0) * x1)
     b.ist('npc')
+    b.ist('npc_puan', T.npc_rutbe_puani(m.tip))
     if y_ is not None:
         with y_.lock:
             y_.npc_oldurdu(b, m.tip, 1)
@@ -1104,7 +1109,7 @@ def portala(w, n, now, acil=False):
             with y.lock:
                 S.atla(b, hedef, y)
                 b.yolda = None
-                b.gelis = int(w.map_id)
+                b.gelis = (int(w.map_id), time.time())
                 b.ist('atlama_cpu')
             return
     g = next((g for g in H.gates(w.map_id, b.firma) if g['hedef'] == b.yolda[0]), None)
@@ -1140,7 +1145,7 @@ def portala(w, n, now, acil=False):
     if y is not None:
         with y.lock:
             S.atla(b, hedef, y)
-            b.gelis = int(w.map_id)
+            b.gelis = (int(w.map_id), time.time())
             b.yolda_t = time.time() + S.atlama_suresi(b)
 
 

@@ -342,6 +342,7 @@ class Yonetici(SohbetMotoru):
                 continue
             b = sira.pop(0)
             b.k['kayitli'] = True
+            b.k['kayit_t'] = now                         # rütbe puanı: kayıttan beri gün (toplum.puan)
             self.sonraki_kayit[f] = now + ort * b.r.uniform(0.67, 1.33)
             if cevrimici + n < sinir:
                 self.giris(b, now)

@@ -1064,8 +1064,8 @@ class Magaza:
 
     def buy(self, loot, amount, category='', buy_category='', quick=False, pet_name='', level=1):
         amount = max(1, int(amount or 1))
-        try:
-            level = max(1, int(level))
+        try:                                        # 3X düğmesi seviyeyi "3X" gönderir (levelGrades): 4. kademe
+            level = 4 if str(level).upper() == '3X' else max(1, int(level))
         except (TypeError, ValueError):
             level = 1
         if not PETM.has_levels(loot):
@@ -1281,7 +1281,7 @@ class Magaza:
 
     def _reward(self, loot, n, level=1):
         """Görev ödülü (kredi/uridyum/EP/onur dışındakiler): cephane, ekipman (boş yuva varsa etkin gemiye takılır; kayıttaki
-        gibi), gemi, gemi tasarımı, cevher, booster, kapı enerjisi, log diski. Sunucuda karşılığı olmayan ödül (Assembly kaynağı, kupon …)
+        gibi; "Auto-equip new items" kapalıysa takılmaz), gemi, gemi tasarımı, cevher, booster, kapı enerjisi, log diski. Sunucuda karşılığı olmayan ödül (Assembly kaynağı, kupon …)
         profilde saklanır (diger_esyalar). level: seviyeli P.E.T. dişlisi/protokolünün seviyesi (Assembly tarifleri)."""
         msgs = []
         RT.note(self.p, 'received_item', loot, n)                              # seyir defteri
@@ -1336,10 +1336,11 @@ class Magaza:
             msgs += [self.inv_item(iid, loot, total), self.pack([self.hangar_item(iid, loot, total)]), legacy('0|LM|ST|%s|%s|%d' % (kind, loot, n))]
         elif slot_of(loot):
             slot, equipped = slot_of(loot), False
+            auto = self.p.d.get('otomatik_kusan', True)     # Ayarlar > Gameplay "Auto-equip new items" (kapalıysa envanterde kalır)
             for _ in range(n):
                 iid = self.p.new_item(loot)
                 msgs += [self.inv_item(iid, loot, 1), self.pack([self.hangar_item(iid, loot, 1)])]
-                if self.free_slots(slot) > 0 and not pet_only(loot) and self.fits(slot, iid, loot):
+                if auto and self.free_slots(slot) > 0 and not pet_only(loot) and self.fits(slot, iid, loot):
                     with self.p.lock:
                         self.p.config().setdefault(slot, []).append(iid)
                         self.p.sync_ekipman()
@@ -1859,9 +1860,12 @@ class Magaza:
                 msgs.append(('HitpointInfoCommand', dict(hitpoints=int(g['hitPoints']), hitpointsMax=g['hitMax'],
                                                          nanoHull=int(g.get('nanoHull', 0)), nanoHullMax=g.get('maxNanoHull', 0))))
             if s['shield_max'] != g.get('shieldMax', 0):
-                fill = getattr(self, 'fill_shield', False) and s['shield_max'] > g.get('shieldMax', 0)
+                old_max = g.get('shieldMax', 0)
+                if getattr(self, 'keep_shield_ratio', False) and old_max > 0:      # formasyon: kalkan yüzdesi korunur
+                    g['shield'] = min(s['shield_max'], g.get('shield', 0) * s['shield_max'] / old_max)
+                else:
+                    g['shield'] = min(g.get('shield', 0), s['shield_max'])
                 g['shieldMax'] = s['shield_max']
-                g['shield'] = s['shield_max'] if fill else min(g.get('shield', 0), s['shield_max'])
                 msgs.append(('AttributeShieldUpdateCommand', {'shieldNow': int(g['shield']), 'shieldMax': g['shieldMax']}))
             self.p.d['kalkan_emme'] = s['absorb']
             # kargo alanı: geminin kargosu + Logistics yeteneği (yetenek.py); ShipInitializationCommand'da görünür
@@ -2008,11 +2012,13 @@ class Magaza:
                 st = self.p.menu_status(k)
                 if st:
                     msgs.append(('MenuItemStatusCommand', st))
-        self.fill_shield = True                       # forum 127433: azami kalkan artarsa kalkan hemen dolar
+        # kalkan yüzdesi korunur: azami kalkanı artıran formasyon kalkanı doldurmaz (oyuncu bildirimi: düşük kalkanla Heart'tan başka
+        # formasyona geçince kalkan tam doluyordu; kalkanı düşüren formasyona girip çıkmak da kalkan kazandırmaz)
+        self.keep_shield_ratio = True
         try:
             msgs += self.drone_msgs() + self.apply_stats()
         finally:
-            self.fill_shield = False
+            self.keep_shield_ratio = False
         self.log('   formasyon: %s (%d)' % (loot, new))
         self.p.ach('formation', dron=len(self.p.d['dronlar']))
         return msgs

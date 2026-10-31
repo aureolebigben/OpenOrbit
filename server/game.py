@@ -1127,6 +1127,10 @@ class Session:
             elif key == 'XCP' and len(parts) > 1 and parts[1].isdigit() and w:
                 with w.lock:                          # 5-2 tüccarında Palladium -> kapı enerjisi: istemci "XCP|<adet>" gönderiyor
                     w.trade_palladium(int(parts[1]))  # (canlı deneme 2026-10-17; TradeSellOreRequest gelmiyor)
+            elif key == 'AEQ' and len(parts) > 1:     # Ayarlar > Gameplay "Auto-equip new items": istemci yaması OtomatikKusanma
+                with self.profil.lock:                 # (istemcinin kendi kutusu hiçbir şey göndermiyor)
+                    self.profil.d['otomatik_kusan'] = parts[1] == '1'
+                    self.profil.dirty = True
             elif key in ('LF', 'JCPU'):
                 pass                                  # her girişte LF|c, JCPU|GET; gerçek sunucu da yanıt vermiyor (kayıt)
             else:

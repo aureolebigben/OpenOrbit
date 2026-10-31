@@ -179,6 +179,9 @@ class Gorev(Hedef):
         p = 0.45 + 0.35 * o['hirs'] * o['sabir'] + (0.35 if bot.arketip == 'gorevci' else 0)
         if bot.k.get('gorev'):
             p += 0.15                     # yarım görev çeker
+        from .. import silah as SL
+        if not SL.lazer_var(bot):
+            p *= 0.3                                      # görevlerin çoğu öldürme ister: cephanesiz ilerlemez
         return p * (1 - 0.3 * bot.ruh['sikilma'])
 
     def basla(self, bot, b):

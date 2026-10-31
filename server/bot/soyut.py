@@ -82,7 +82,12 @@ def kas(bot, dt, y, hedef_tip=None):
     ehp_ort = nv['ehp'] if nv else sum(K.npc_degeri(t)['ehp'] * v for t, v in r['oldurme'].items()) / max(1e-9, sum(r['oldurme'].values()))
     lz, rk, dps, lazer_dps = SL.kasma_plani(bot, ehp_ort)
     if not lz and not rk:
-        return                                           # mermisi yok: ikmal edene dek kasamaz
+        # mermisi yok: kasamaz, oyuncu gibi bonus kutusu toplar (kutudan cephane ve kredi gelir; parası bitmiş bot böyle toparlanır)
+        k = dt / 3600.0 * hiz * 0.5 * (1 - 0.35 * bot.ruh['yorgunluk'])
+        kutu = BONUS_URI_SAAT * (1 + bot.seviye / 6.0) * k * x1_kesinti(bot)
+        bot.odul('kutu', uridyum=kutu)
+        SL.kutu_cephanesi(bot, kutu / KUTU_URI)
+        return
     from . import lab as LB
     ehp = d['ehp'] * (1 + 0.5 * LB.bonus(bot, LB.KALKAN))      # kalkan yükü (kalkan payı ~yarısı)
     if abs(dps - d['dps']) > 1e-6 or ehp != d['ehp']:
@@ -118,6 +123,8 @@ def kas(bot, dt, y, hedef_tip=None):
         n = _poisson(bot.r, saat * k)
         if n:
             toplam += n
+            from . import toplum as TB
+            bot.ist('npc_puan', TB.npc_rutbe_puani(tip) * n)
             from . import ganimet as GB
             GB.ek_ganimet(bot, tip, n)                   # Scrapium, Mucosum, günlük dosyası …
             if bot.izin.get('kargo', True):             # kargo kutuları: sabırlı oyuncu hepsini toplar, aceleci çoğunu bırakır
@@ -251,6 +258,8 @@ def pvp_odul(kazanan, kaybeden, y, now):
     hiz = y.hiz(kazanan) if y is not None else 1.0
     kazanan.odul(None, hiz, ep=oo['ep_puan'] * kat, onur=oo['onur_puan'] * kat)
     kazanan.ist('oyuncu')
+    from . import toplum as TB
+    kazanan.ist('oyuncu_puan', TB.gemi_rutbe_puani(kaybeden.k['ekip']['gemi']))
     kazanan.ruh.it(moral=0.1, ozguven=0.08, ofke=-0.2)
     kazanan.hafiza.olay(kaybeden.ad, 'oldurdum', now)
     kazanan.olay('oldurdum', now, kurban=kaybeden.ad)

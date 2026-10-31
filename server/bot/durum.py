@@ -18,6 +18,7 @@ import profil as PF
 from . import katalog as K
 from . import kisilik as KS
 from . import oyun_ayari as OA
+from . import toplum as T
 
 BOT_UID_TABAN = 1800000000
 
@@ -38,6 +39,9 @@ class Bot:
         k.setdefault('klan', None)
         k.setdefault('arkadaslar', [])
         k.setdefault('istat', {})
+        if 'npc_puan' not in k['istat']:       # eski kayıt: öldürmelerin türü yok; uzaylı başına sıradan uzaylıların ortalaması (3,7),
+            k['istat']['npc_puan'] = round(k['istat'].get('npc', 0) * 3.7)       # oyuncu gemisi başına kendi gemisinin puanı
+            k['istat']['oyuncu_puan'] = k['istat'].get('oyuncu', 0) * T.gemi_rutbe_puani(k['ekip']['gemi'])
         k.setdefault('gorev', None)
         k.setdefault('tamam', [])
         k.setdefault('kargo', {})

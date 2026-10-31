@@ -115,7 +115,10 @@ def aday(bot):
     para = {'C': bot.k['kredi'], 'U': bot.k['uridyum']}
     para['C'] = max(0, para['C'] - bot.klan_birikimi())                     # klan kuracak: kuruluş bedelini biriktirir
     ceq = lambda c: c[2] * (KUR if c[1] == 'U' else 1)
-    verim = lambda c: c[0] / max(1.0, ceq(c)) * 1e5
+    # verim: artış / (fiyat + servetin çeyreği): az parada kredi başına verim, çok parada artışın büyüklüğü öne geçer (zengin bot
+    # 80M kredi ve 2M uridyumla +3,4 güçlü Apis yerine 2.000 C'lik +0,04'lük hız jeneratörünü seçiyordu; Laya denemesi 2026-10-31)
+    servet = para['C'] + para['U'] * KUR
+    verim = lambda c: c[0] / max(1.0, ceq(c) + 0.25 * servet) * 1e5
     t = bot.o('tutumluluk')
     hedefi = next((c for c in tum if c[3] == bot.k.get('birikim')), None)
     if hedefi is not None:                       # kendi seçtiği biriktirme hedefi (ajanın biriktir aracı): yalnız onu alır

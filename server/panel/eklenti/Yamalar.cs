@@ -11,7 +11,10 @@ using DarkOrbit;
 using DG.Tweening;
 using DG.Tweening.Core;
 using HarmonyLib;
+using Il2CppInterop.Runtime;
 using net.bigpoint.darkorbit.com.module.porting.halloffame;
+using UnityEngine;
+using UnityEngine.Events;
 
 namespace OpenOrbit;
 
@@ -26,6 +29,7 @@ public class Eklenti : BasePlugin
         Uygula("mağaza tutarı", () => MagazaTutari.Uygula(h));
         Uygula("otomatik pilot kaçışı", () => OtopilotKacisi.Uygula(h));
         Uygula("sohbet moderatörü rengi", () => ModeratorRengi.Uygula(h));
+        Uygula("otomatik kuşanma ayarı", () => OtomatikKusanma.Uygula(h));
         Uygula("görev metinleri", () => GorevMetinleri.Uygula(h));
         Uygula("görsel dökümü", () =>
         {
@@ -248,5 +252,49 @@ static class ModeratorRengi
         int i = __result.IndexOf(BEYAZ, StringComparison.Ordinal);
         if (i >= 0)
             __result = __result.Substring(0, i) + "<color=" + RENK + ">" + __result.Substring(i + BEYAZ.Length);
+    }
+}
+
+// Otomatik kuşanma ayarı (kullanıcı bildirimi 2026-10-31: "Auto-equip new items" kapalıyken de ödül eşyaları takılıyordu): Ayarlar >
+//   Gameplay'deki kutu (Tog9GameplayToggle) istemcide yalnız etiketle kurulur (UISettingsSystem.InitGameplay; dinleyicisi yok, kaydedilmez,
+//   GameplaySettingsRequest'te alanı yok), sunucu ödül ekipmanını boş yuvaya hep takıyordu (magaza._reward). K1: InitGameplay'den sonra
+//   kutu PlayerPrefs'teki değerle kurulur (varsayılan açık); değişince kaydedilir. Kurulunca ve değişince sunucuya LegacyModule
+//   "AEQ|1" / "AEQ|0" gider (game.py -> profil otomatik_kusan).
+static class OtomatikKusanma
+{
+    const string ANAHTAR = "openorbit_autoEquip";
+
+    internal static void Uygula(Harmony h)
+    {
+        MethodBase hedef = AccessTools.Method(typeof(UISettingsSystem), nameof(UISettingsSystem.InitGameplay));
+        Eklenti.Bul(hedef);
+        h.Patch(hedef, postfix: new HarmonyMethod(typeof(OtomatikKusanma), nameof(Sonra)));
+    }
+
+    static void Sonra(UISettings self)
+    {
+        var kutu = self?.View?.Tog9GameplayToggle;
+        if (kutu == null)
+            return;
+        bool acik = PlayerPrefs.GetInt(ANAHTAR, 1) != 0;
+        kutu.onValueChanged.RemoveAllListeners();
+        kutu.SetIsOnWithoutNotify(acik);
+        kutu.onValueChanged.AddListener(DelegateSupport.ConvertDelegate<UnityAction<bool>>(new Action<bool>(Degisti)));
+        Gonder(acik);
+    }
+
+    static void Degisti(bool acik)
+    {
+        PlayerPrefs.SetInt(ANAHTAR, acik ? 1 : 0);
+        PlayerPrefs.Save();
+        Gonder(acik);
+    }
+
+    static void Gonder(bool acik)
+    {
+        var parcalar = new Il2CppSystem.Collections.Generic.List<string>();
+        parcalar.Add("AEQ");
+        parcalar.Add(acik ? "1" : "0");
+        NetConnectionHelper.SendLegacyModule(parcalar);
     }
 }

@@ -13,7 +13,8 @@ class PvpAvi(Hedef):
 
     def uygun(self, bot, b):
         from .. import yonetici_uyari as YU
-        return bot.seviye >= (b.ayar('pvp_seviye', 6) or 1) and bot.deger()['guc'] >= 8 and not YU.etkin(bot, 'pvp', b.now)
+        from .. import silah as SL
+        return bot.seviye >= (b.ayar('pvp_seviye', 6) or 1) and bot.deger()['guc'] >= 8 and not YU.etkin(bot, 'pvp', b.now)             and SL.lazer_var(bot)                         # cephanesiz oyuncu avlanmaz
 
     def puan(self, bot, b):
         o = bot.ozellik

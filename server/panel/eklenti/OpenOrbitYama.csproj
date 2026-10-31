@@ -26,6 +26,7 @@
     <Reference Include="$(Istemci)\BepInEx\interop\DOTween.dll" Private="false" />
     <Reference Include="$(Istemci)\BepInEx\interop\Unity.TextMeshPro.dll" Private="false" />
     <Reference Include="$(Istemci)\BepInEx\interop\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="$(Istemci)\BepInEx\interop\UnityEngine.UI.dll" Private="false" />
     <Reference Include="$(Istemci)\BepInEx\interop\UnityEngine.AssetBundleModule.dll" Private="false" />
     <Reference Include="$(Istemci)\BepInEx\interop\UnityEngine.ImageConversionModule.dll" Private="false" />
   </ItemGroup>
